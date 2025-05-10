@@ -296,7 +296,7 @@ done1:
     j _finish
 
 
-#****************************** Subroutines ************************************
+#********************************************************************** Subroutines ************************************************************************************
 
 #################################################################################
 # Convolutional Layer Subroutine
@@ -305,110 +305,239 @@ done1:
 # a2: conv filter biases address
 # a3: conv_output address
 #################################################################################
-Conv_layer:
-#Declarations  ------> Data from vectorized modified has been pulled here in the subroutine
+# # SCALAR
+# Conv_layer:
+# #Declarations  ------> Data from vectorized modified has been pulled here in the subroutine
 
-    li t0, 0          # filter index (0 to 7)
+#     li t0, 0          # filter index (0 to 7)
+# filter_loop:
+#     li t1, 0          # out_y = 0 to 23
+#     li s0, 24         # reuse s0 as constant 24
+#     # # At the end of filter_loop
+#     # addi t0, t0, 1
+#     # li s9, 8
+#     # blt t0, s9, filter_loop
+    
+# out_y_loop:
+#     li t2, 0          # out_x = 0 to 23
+    
+#     # # At the end of out_y_loop
+#     # addi t1, t1, 1
+#     # blt t1, s0, out_y_loop
+
+    
+# out_x_loop:
+#     # calculate output offset = ((filter * 576) + (out_y * 24 + out_x)) * 4
+#     mul t3, t0, s0        # t3 = filter * 24
+#     mul t3, t3, s0        # t3 = filter * 576
+#     mul t4, t1, s0        # t4 = out_y * 24
+#     add t4, t4, t2        # t4 = out_y * 24 + out_x
+#     add t5, t3, t4        # t5 = output index
+#     slli t5, t5, 2        # t5 = offset in bytes
+#     add t6, a3, t5        # t6 = output address
+
+#     # Load bias for current filter
+#     slli s10, t0, 2
+#     add s10, a2, s10
+#     flw ft3, 0(s10)        # ft3 = accumulator = bias
+
+#     li s10, 0              # ky
+    
+#     # # At the end of out_x_loop
+#     # addi t2, t2, 1
+#     # blt t2, s0, out_x_loop     # s0 = 24
+    
+# conv_y_loop:
+#     li t4, 0              # kx
+# conv_x_loop:
+#     # input_x = out_x + kx
+#     add s11, t2, t4
+#     # input_y = out_y + ky
+#     add a4, t1, s10
+
+#     # in_index = input_y * 28 + input_x
+#     li s1, 28
+#     mul s2, a4, s1
+#     add s2, s2, s11
+#     slli s2, s2, 2
+#     add s3, a0, s2
+#     flw ft0, 0(s3)        # ft0 = input pixel
+
+#     # filter_offset = ((filter * 25) + (ky * 5 + kx)) * 4
+#     li s4, 25
+#     mul s5, t0, s4
+#     li s6, 5
+#     mul s7, s10, s6
+#     add s7, s7, t4
+#     add s5, s5, s7
+#     slli s5, s5, 2
+#     add s6, a1, s5
+#     flw ft1, 0(s6)        # ft1 = filter weight
+
+#     # Multiply and accumulate
+#     fmul.s ft2, ft0, ft1
+#     fadd.s ft3, ft3, ft2
+
+#     addi t4, t4, 1
+#     li s8, 5
+#     blt t4, s8, conv_x_loop
+
+#     addi s10, s10, 1
+#     blt s10, s8, conv_y_loop
+
+#     # Apply ReLU
+#     # fmv.s.x ft0, zero
+#     # fmax.s ft3, ft3, ft0
+
+#     # Store result
+#     fsw ft3, 0(t6)
+
+#     # next out_x
+#     addi t2, t2, 1
+#     blt t2, s0, out_x_loop
+
+#     # next out_y
+#     addi t1, t1, 1
+#     blt t1, s0, out_y_loop
+
+#     # next filter
+#     addi t0, t0, 1
+#     li s9, 8
+#     blt t0, s9, filter_loop
+
+#     # exit
+#     ret
+# # exit:
+# #    li a0, 10
+# #    ecall
+
+# VECTOR
+Conv_layer:
+    # Initialize filter index (0 to 7)
+    li t0, 0                  # t0 = current filter index (0-7)
+    
 filter_loop:
-    li t1, 0          # out_y = 0 to 23
-    li s0, 24         # reuse s0 as constant 24
-    # # At the end of filter_loop
-    # addi t0, t0, 1
-    # li s9, 8
-    # blt t0, s9, filter_loop
+    # =============================================
+    # Load bias for current filter
+    # =============================================
+    slli s10, t0, 2           # s10 = filter_index * 4 (float size)
+    add s10, a2, s10          # s10 = address of bias[filter]
+    flw ft3, 0(s10)           # ft3 = bias value for current filter
+    
+    # Initialize output row index (0 to 23)
+    li t1, 0                  # t1 = out_y (vertical position in output)
+    li s0, 28                 # s0 = constant 28 (input dimension)
+    li s1, 24                 # s1 = constant 24 (output dimension)
+    
+    # Configure vector unit (4 elements per vector)
+    li t3, 4                  # Process 4 outputs simultaneously
+    vsetvli t3, t3, e32, m1   # Set vector length to 4, 32-bit floats
     
 out_y_loop:
-    li t2, 0          # out_x = 0 to 23
-    
-    # # At the end of out_y_loop
-    # addi t1, t1, 1
-    # blt t1, s0, out_y_loop
-
+    # Initialize output column index (process 4 columns at a time)
+    li t2, 0                  # t2 = out_x (horizontal position in output)
     
 out_x_loop:
-    # calculate output offset = ((filter * 576) + (out_y * 24 + out_x)) * 4
-    mul t3, t0, s0        # t3 = filter * 24
-    mul t3, t3, s0        # t3 = filter * 576
-    mul t4, t1, s0        # t4 = out_y * 24
-    add t4, t4, t2        # t4 = out_y * 24 + out_x
-    add t5, t3, t4        # t5 = output index
-    slli t5, t5, 2        # t5 = offset in bytes
-    add t6, a3, t5        # t6 = output address
-
-    # Load bias for current filter
-    slli s10, t0, 2
-    add s10, a2, s10
-    flw ft3, 0(s10)        # ft3 = accumulator = bias
-
-    li s10, 0              # ky
+    # Initialize vector accumulator with bias value
+    vfmv.v.f v4, ft3          # v4 = [bias, bias, bias, bias] (vector)
     
-    # # At the end of out_x_loop
-    # addi t2, t2, 1
-    # blt t2, s0, out_x_loop     # s0 = 24
+    # Process all positions in the 5x5 filter for this output position
+    li s10, 0                 # s10 = ky (filter row index)
     
 conv_y_loop:
-    li t4, 0              # kx
+    li s11, 0                 # s11 = kx (filter column index)
+    
 conv_x_loop:
-    # input_x = out_x + kx
-    add s11, t2, t4
-    # input_y = out_y + ky
-    add a4, t1, s10
-
-    # in_index = input_y * 28 + input_x
-    li s1, 28
-    mul s2, a4, s1
-    add s2, s2, s11
-    slli s2, s2, 2
-    add s3, a0, s2
-    flw ft0, 0(s3)        # ft0 = input pixel
-
-    # filter_offset = ((filter * 25) + (ky * 5 + kx)) * 4
-    li s4, 25
-    mul s5, t0, s4
-    li s6, 5
-    mul s7, s10, s6
-    add s7, s7, t4
-    add s5, s5, s7
-    slli s5, s5, 2
-    add s6, a1, s5
-    flw ft1, 0(s6)        # ft1 = filter weight
-
-    # Multiply and accumulate
-    fmul.s ft2, ft0, ft1
-    fadd.s ft3, ft3, ft2
-
-    addi t4, t4, 1
+    # =============================================
+    # Load filter weight for current position
+    # Filter memory layout: [filter][ky][kx]
+    # =============================================
+    li s4, 25                 # 25 weights per filter (5x5)
+    mul s5, t0, s4            # s5 = filter_index * 25
+    li s6, 5                  # Filter width = 5
+    mul s7, s10, s6           # s7 = ky * 5
+    add s5, s5, s7            # s5 = filter*25 + ky*5
+    add s5, s5, s11           # s5 += kx (current filter column)
+    slli s5, s5, 2            # Convert to byte offset
+    add s6, a1, s5            # s6 = &filter[filter][ky][kx]
+    flw ft1, 0(s6)            # ft1 = weight at (ky, kx) (scalar)
+    
+    # =============================================
+    # Load 4 input pixels horizontally for current filter position
+    # Input memory layout: [input_y][input_x]
+    # =============================================
+    add a4, t1, s10           # a4 = input_y = out_y + ky
+    add a5, t2, s11           # a5 = base input_x = out_x + kx
+    li s2, 28                 # Input width = 28
+    mul s3, a4, s2            # s3 = input_y * 28
+    add s3, s3, a5            # s3 += base input_x
+    slli s3, s3, 2            # Convert to byte offset
+    add s7, a0, s3            # s7 = &input[input_y][input_x]
+    vle32.v v5, (s7)          # v5 = [input[y][x], input[y][x+1], input[y][x+2], input[y][x+3]]
+    
+    # =============================================
+    # Vector multiply-accumulate operation
+    # =============================================
+    vfmv.v.f v6, ft1          # Broadcast filter weight to all vector lanes
+    vfmacc.vv v4, v5, v6      # v4 += v5 * v6 (element-wise)
+    
+    # Next filter column
+    addi s11, s11, 1          # kx++
     li s8, 5
-    blt t4, s8, conv_x_loop
+    blt s11, s8, conv_x_loop  # Loop until kx = 5
+    
+    # Next filter row
+    addi s10, s10, 1          # ky++
+    li s8, 5
+    blt s10, s8, conv_y_loop  # Loop until ky = 5
+    
+    # =============================================
+    # Calculate output address and store results
+    # Output memory layout: [filter][out_y][out_x]
+    # =============================================
+    li s4, 576                # 24*24 outputs per filter
+    mul s5, t0, s4            # s5 = filter_index * 576
+    mul s6, t1, s1            # s6 = out_y * 24
+    add s6, s6, t2            # s6 += out_x
+    add s5, s5, s6            # s5 = absolute output index
+    slli s5, s5, 2            # Convert to byte offset
+    add s7, a3, s5            # s7 = &output[filter][out_y][out_x]
+    
+    # Store 4 results
+    vse32.v v4, (s7)          # Store vector to output
+    
+    # Next block of 4 columns
+    addi t2, t2, 4            # out_x += 4
+    # Make sure we don't exceed the output width
+    li s9, 20                 # 24-4 = 20 (last starting position for 4-wide vector)
+    ble t2, s9, out_x_loop    # Loop while out_x <= 20
+    
+    # Check if we need to handle the last columns
+    # bge t2, s1, skip_last_columns # Skip if we've processed all columns
+    bge t2, s1, end_row # Skip if we've processed all columns
+    
+    # Handle remaining columns (t2=20 to t2=23)
+    # For simplicity, we'll use the vector operations with masking
+    vfmv.v.f v4, ft3          # Reset accumulator with bias
+    
+    # Process all positions in the 5x5 filter for remaining output position
+    li s10, 0                 # Reset ky (filter row index)
 
-    addi s10, s10, 1
-    blt s10, s8, conv_y_loop
+    # Handle remaining columns (if needed, or you can skip this)
+    # ...
+    end_row:
+        # Next output row
+        addi t1, t1, 1            # out_y++
+        blt t1, s1, out_y_loop    # Loop until out_y = 24
+        
+        # Next filter
+        addi t0, t0, 1            # filter_index++
+        li s9, 8
+        blt t0, s9, filter_loop   # Loop until filter_index = 8
 
-    # Apply ReLU
-    # fmv.s.x ft0, zero
-    # fmax.s ft3, ft3, ft0
-
-    # Store result
-    fsw ft3, 0(t6)
-
-    # next out_x
-    addi t2, t2, 1
-    blt t2, s0, out_x_loop
-
-    # next out_y
-    addi t1, t1, 1
-    blt t1, s0, out_y_loop
-
-    # next filter
-    addi t0, t0, 1
-    li s9, 8
-    blt t0, s9, filter_loop
-
-    # exit
-    ret
-# exit:
-#    li a0, 10
-#    ecall
+    end:
+        ret                       # Return from function
+################################# Conv2D Subroutine End ##################################################
 
 ################################# ReLU Subroutine ##################################################
 # Both SCALAR and VECTOR built by SafeGOAT
