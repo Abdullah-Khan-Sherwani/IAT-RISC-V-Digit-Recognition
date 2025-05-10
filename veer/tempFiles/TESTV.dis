@@ -5,8 +5,8 @@
 Disassembly of section .text:
 
 80000000 <_start>:
-80000000:	7004b517          	auipc	a0,0x7004b
-80000004:	77850513          	addi	a0,a0,1912 # f004b778 <input_matrix>
+80000000:	70056517          	auipc	a0,0x70056
+80000004:	9d050513          	addi	a0,a0,-1584 # f00559d0 <input_matrix>
 80000008:	31000293          	li	t0,784
 
 8000000c <main>:
@@ -19,407 +19,397 @@ Disassembly of section .text:
 80000018:	c452                	sw	s4,8(sp)
 8000001a:	c256                	sw	s5,4(sp)
 8000001c:	c05a                	sw	s6,0(sp)
-8000001e:	2abd                	jal	8000019c <Conv_layer>
-80000020:	4b02                	lw	s6,0(sp)
-80000022:	4a92                	lw	s5,4(sp)
-80000024:	4a22                	lw	s4,8(sp)
-80000026:	49b2                	lw	s3,12(sp)
-80000028:	4942                	lw	s2,16(sp)
-8000002a:	44d2                	lw	s1,20(sp)
-8000002c:	4462                	lw	s0,24(sp)
-8000002e:	40f2                	lw	ra,28(sp)
-80000030:	6105                	addi	sp,sp,32
-80000032:	7004d517          	auipc	a0,0x7004d
-80000036:	89c50513          	addi	a0,a0,-1892 # f004c8ce <conv_output>
-8000003a:	6585                	lui	a1,0x1
-8000003c:	20058593          	addi	a1,a1,512 # 1200 <MatrixSize+0x11f6>
-80000040:	1141                	addi	sp,sp,-16
-80000042:	2cb1                	jal	8000029e <relu_activation>
-80000044:	0141                	addi	sp,sp,16
-80000046:	7004d297          	auipc	t0,0x7004d
-8000004a:	88828293          	addi	t0,t0,-1912 # f004c8ce <conv_output>
-8000004e:	7004c317          	auipc	t1,0x7004c
-80000052:	3ce30313          	addi	t1,t1,974 # f004c41c <output_max>
-80000056:	4381                	li	t2,0
-80000058:	4e21                	li	t3,8
-8000005a:	6e85                	lui	t4,0x1
-8000005c:	900e8e93          	addi	t4,t4,-1792 # 900 <MatrixSize+0x8f6>
-80000060:	24000f13          	li	t5,576
+8000001e:	70056517          	auipc	a0,0x70056
+80000022:	9b250513          	addi	a0,a0,-1614 # f00559d0 <input_matrix>
+80000026:	70055597          	auipc	a1,0x70055
+8000002a:	66258593          	addi	a1,a1,1634 # f0055688 <conv_filters>
+8000002e:	70056617          	auipc	a2,0x70056
+80000032:	97a60613          	addi	a2,a2,-1670 # f00559a8 <filter_bias>
+80000036:	70040697          	auipc	a3,0x70040
+8000003a:	fce68693          	addi	a3,a3,-50 # f0040004 <conv_output>
+8000003e:	2a5d                	jal	800001f4 <Conv_layer>
+80000040:	4b02                	lw	s6,0(sp)
+80000042:	4a92                	lw	s5,4(sp)
+80000044:	4a22                	lw	s4,8(sp)
+80000046:	49b2                	lw	s3,12(sp)
+80000048:	4942                	lw	s2,16(sp)
+8000004a:	44d2                	lw	s1,20(sp)
+8000004c:	4462                	lw	s0,24(sp)
+8000004e:	40f2                	lw	ra,28(sp)
+80000050:	6105                	addi	sp,sp,32
+80000052:	70040517          	auipc	a0,0x70040
+80000056:	fb250513          	addi	a0,a0,-78 # f0040004 <conv_output>
+8000005a:	6585                	lui	a1,0x1
+8000005c:	20058593          	addi	a1,a1,512 # 1200 <MatrixSize+0x11f6>
+80000060:	1141                	addi	sp,sp,-16
+80000062:	2c35                	jal	8000029e <relu_activation>
+80000064:	0141                	addi	sp,sp,16
+80000066:	70040297          	auipc	t0,0x70040
+8000006a:	f9e28293          	addi	t0,t0,-98 # f0040004 <conv_output>
+8000006e:	70056317          	auipc	t1,0x70056
+80000072:	60630313          	addi	t1,t1,1542 # f0056674 <output_max>
+80000076:	43e1                	li	t2,24
+80000078:	4e31                	li	t3,12
+8000007a:	4ea1                	li	t4,8
+8000007c:	24bd                	jal	800002ea <maxpool_2x2>
+8000007e:	2cdd                	jal	80000374 <Flatten>
 
-80000064 <max_pool_loop>:
-80000064:	1101                	addi	sp,sp,-32
-80000066:	ce1e                	sw	t2,28(sp)
-80000068:	cc72                	sw	t3,24(sp)
-8000006a:	ca76                	sw	t4,20(sp)
-8000006c:	c816                	sw	t0,16(sp)
-8000006e:	c61a                	sw	t1,12(sp)
-80000070:	c47a                	sw	t5,8(sp)
-80000072:	248d                	jal	800002d4 <maxpool_2x2>
-80000074:	43f2                	lw	t2,28(sp)
-80000076:	4e62                	lw	t3,24(sp)
-80000078:	4ed2                	lw	t4,20(sp)
-8000007a:	42c2                	lw	t0,16(sp)
-8000007c:	4332                	lw	t1,12(sp)
-8000007e:	4f22                	lw	t5,8(sp)
-80000080:	6105                	addi	sp,sp,32
-80000082:	92f6                	add	t0,t0,t4
-80000084:	937a                	add	t1,t1,t5
-80000086:	0385                	addi	t2,t2,1
-80000088:	fdc3cee3          	blt	t2,t3,80000064 <max_pool_loop>
+80000080 <dense_layer>:
+80000080:	1131                	addi	sp,sp,-20
+80000082:	c022                	sw	s0,0(sp)
+80000084:	c226                	sw	s1,4(sp)
+80000086:	c44a                	sw	s2,8(sp)
+80000088:	c64e                	sw	s3,12(sp)
+8000008a:	c806                	sw	ra,16(sp)
+8000008c:	7004a517          	auipc	a0,0x7004a
+80000090:	1cc50513          	addi	a0,a0,460 # f004a258 <dense_weights>
+80000094:	70044597          	auipc	a1,0x70044
+80000098:	77058593          	addi	a1,a1,1904 # f0044804 <output_max_flattened>
+8000009c:	70055617          	auipc	a2,0x70055
+800000a0:	5bc60613          	addi	a2,a2,1468 # f0055658 <dense_bias>
+800000a4:	70046697          	auipc	a3,0x70046
+800000a8:	98868693          	addi	a3,a3,-1656 # f0045a2c <dense_outputs>
+800000ac:	4401                	li	s0,0
+800000ae:	49a9                	li	s3,10
 
-8000008c <dense_layer>:
-8000008c:	7004c517          	auipc	a0,0x7004c
-80000090:	39050513          	addi	a0,a0,912 # f004c41c <output_max>
-80000094:	70040597          	auipc	a1,0x70040
-80000098:	f6c58593          	addi	a1,a1,-148 # f0040000 <dense_weights>
-8000009c:	7004b617          	auipc	a2,0x7004b
-800000a0:	36460613          	addi	a2,a2,868 # f004b400 <dense_bias>
-800000a4:	7004d697          	auipc	a3,0x7004d
-800000a8:	80268693          	addi	a3,a3,-2046 # f004c8a6 <dense_output>
-800000ac:	4281                	li	t0,0
-800000ae:	4329                	li	t1,10
+800000b0 <outer_loop>:
+800000b0:	07345363          	bge	s0,s3,80000116 <end_outer>
+800000b4:	00000293          	li	t0,0
+800000b8:	d002f053          	fcvt.s.w	ft0,t0
+800000bc:	4481                	li	s1,0
+800000be:	48000913          	li	s2,1152
+800000c2:	48000313          	li	t1,1152
+800000c6:	02640333          	mul	t1,s0,t1
+800000ca:	030a                	slli	t1,t1,0x2
+800000cc:	932a                	add	t1,t1,a0
 
-800000b0 <dense_outer_loop>:
-800000b0:	4381                	li	t2,0
-800000b2:	f0000053          	fmv.w.x	ft0,zero
+800000ce <inner_loop>:
+800000ce:	0324d263          	bge	s1,s2,800000f2 <end_inner>
+800000d2:	00032383          	lw	t2,0(t1)
+800000d6:	f00380d3          	fmv.w.x	ft1,t2
+800000da:	00249e13          	slli	t3,s1,0x2
+800000de:	9e2e                	add	t3,t3,a1
+800000e0:	000e2e83          	lw	t4,0(t3)
+800000e4:	f00e8153          	fmv.w.x	ft2,t4
+800000e8:	0020f043          	fmadd.s	ft0,ft1,ft2,ft0
+800000ec:	0311                	addi	t1,t1,4
+800000ee:	0485                	addi	s1,s1,1
+800000f0:	bff9                	j	800000ce <inner_loop>
 
-800000b6 <dense_inner_loop>:
-800000b6:	03d3d763          	bge	t2,t4,800000e4 <inner_loop_end>
-800000ba:	03d28f33          	mul	t5,t0,t4
-800000be:	9f1e                	add	t5,t5,t2
-800000c0:	0f0a                	slli	t5,t5,0x2
-800000c2:	01e58fb3          	add	t6,a1,t5
-800000c6:	000fa087          	flw	ft1,0(t6)
-800000ca:	00239f13          	slli	t5,t2,0x2
-800000ce:	01e50fb3          	add	t6,a0,t5
-800000d2:	000fa107          	flw	ft2,0(t6)
-800000d6:	1020f1d3          	fmul.s	ft3,ft1,ft2
-800000da:	00307053          	fadd.s	ft0,ft0,ft3
-800000de:	0385                	addi	t2,t2,1
-800000e0:	fdd3cbe3          	blt	t2,t4,800000b6 <dense_inner_loop>
+800000f2 <end_inner>:
+800000f2:	00241f13          	slli	t5,s0,0x2
+800000f6:	9f32                	add	t5,t5,a2
+800000f8:	000f2f83          	lw	t6,0(t5)
+800000fc:	f00f81d3          	fmv.w.x	ft3,t6
+80000100:	00307053          	fadd.s	ft0,ft0,ft3
+80000104:	00241f13          	slli	t5,s0,0x2
+80000108:	9f36                	add	t5,t5,a3
+8000010a:	e0000fd3          	fmv.x.w	t6,ft0
+8000010e:	01ff2023          	sw	t6,0(t5)
+80000112:	0405                	addi	s0,s0,1
+80000114:	bf71                	j	800000b0 <outer_loop>
 
-800000e4 <inner_loop_end>:
-800000e4:	00229f13          	slli	t5,t0,0x2
-800000e8:	01e60fb3          	add	t6,a2,t5
-800000ec:	000fa087          	flw	ft1,0(t6)
-800000f0:	00107053          	fadd.s	ft0,ft0,ft1
-800000f4:	00229f13          	slli	t5,t0,0x2
-800000f8:	01e68fb3          	add	t6,a3,t5
-800000fc:	000fa027          	fsw	ft0,0(t6)
-80000100:	0285                	addi	t0,t0,1
-80000102:	4329                	li	t1,10
-80000104:	fa62c6e3          	blt	t0,t1,800000b0 <dense_outer_loop>
+80000116 <end_outer>:
+80000116:	4b82                	lw	s7,0(sp)
+80000118:	4b12                	lw	s6,4(sp)
+8000011a:	4aa2                	lw	s5,8(sp)
+8000011c:	4a32                	lw	s4,12(sp)
+8000011e:	49c2                	lw	s3,16(sp)
+80000120:	4952                	lw	s2,20(sp)
+80000122:	44e2                	lw	s1,24(sp)
+80000124:	4472                	lw	s0,28(sp)
+80000126:	5082                	lw	ra,32(sp)
+80000128:	02410113          	addi	sp,sp,36
+8000012c:	70046517          	auipc	a0,0x70046
+80000130:	90050513          	addi	a0,a0,-1792 # f0045a2c <dense_outputs>
+80000134:	4591                	li	a1,4
+80000136:	2441                	jal	800003b6 <printToLogVectorized>
+80000138:	ac5d                	j	800003ee <_finish>
+8000013a:	a009                	j	8000013c <softmax_layer>
 
-80000108 <softmax_layer>:
-80000108:	7004c717          	auipc	a4,0x7004c
-8000010c:	79470713          	addi	a4,a4,1940 # f004c89c <p>
-80000110:	4281                	li	t0,0
-80000112:	0006a007          	flw	ft0,0(a3)
+8000013c <softmax_layer>:
+8000013c:	86aa                	mv	a3,a0
+8000013e:	872e                	mv	a4,a1
+80000140:	82b2                	mv	t0,a2
+80000142:	3f800337          	lui	t1,0x3f800
+80000146:	f00300d3          	fmv.w.x	ft1,t1
+8000014a:	3f000337          	lui	t1,0x3f000
+8000014e:	f0030153          	fmv.w.x	ft2,t1
+80000152:	0006a007          	flw	ft0,0(a3)
+80000156:	4305                	li	t1,1
 
-80000116 <max_loop>:
-80000116:	4329                	li	t1,10
-80000118:	0062dc63          	bge	t0,t1,80000130 <compute_exp_sum>
-8000011c:	00229393          	slli	t2,t0,0x2
-80000120:	00768e33          	add	t3,a3,t2
-80000124:	000e2087          	flw	ft1,0(t3)
-80000128:	28101053          	fmax.s	ft0,ft0,ft1
-8000012c:	0285                	addi	t0,t0,1
-8000012e:	b7e5                	j	80000116 <max_loop>
+80000158 <find_max>:
+80000158:	00534363          	blt	t1,t0,8000015e <fm_cont>
+8000015c:	a819                	j	80000172 <fm_done>
 
-80000130 <compute_exp_sum>:
-80000130:	4281                	li	t0,0
-80000132:	f0000153          	fmv.w.x	ft2,zero
+8000015e <fm_cont>:
+8000015e:	00231393          	slli	t2,t1,0x2
+80000162:	00768e33          	add	t3,a3,t2
+80000166:	000e2187          	flw	ft3,0(t3)
+8000016a:	28301053          	fmax.s	ft0,ft0,ft3
+8000016e:	0305                	addi	t1,t1,1 # 3f000001 <MatrixSize+0x3efffff7>
+80000170:	b7e5                	j	80000158 <find_max>
 
-80000136 <exp_loop>:
-80000136:	4329                	li	t1,10
-80000138:	0462d263          	bge	t0,t1,8000017c <normalize_softmax>
-8000013c:	00229393          	slli	t2,t0,0x2
-80000140:	00768e33          	add	t3,a3,t2
-80000144:	000e2087          	flw	ft1,0(t3)
-80000148:	0800f1d3          	fsub.s	ft3,ft1,ft0
-8000014c:	3f800fb7          	lui	t6,0x3f800
-80000150:	f00f8353          	fmv.w.x	ft6,t6
-80000154:	00337253          	fadd.s	ft4,ft6,ft3
-80000158:	1031f3d3          	fmul.s	ft7,ft3,ft3
-8000015c:	3f000fb7          	lui	t6,0x3f000
-80000160:	f00f8453          	fmv.w.x	fs0,t6
-80000164:	1083f3d3          	fmul.s	ft7,ft7,fs0
-80000168:	00727253          	fadd.s	ft4,ft4,ft7
-8000016c:	00770e33          	add	t3,a4,t2
-80000170:	004e2027          	fsw	ft4,0(t3)
-80000174:	00417153          	fadd.s	ft2,ft2,ft4
-80000178:	0285                	addi	t0,t0,1
-8000017a:	bf75                	j	80000136 <exp_loop>
+80000172 <fm_done>:
+80000172:	0810f353          	fsub.s	ft6,ft1,ft1
+80000176:	5e035457          	vfmv.v.f	v8,ft6
+8000017a:	4301                	li	t1,0
 
-8000017c <normalize_softmax>:
-8000017c:	4281                	li	t0,0
+8000017c <exp_loop>:
+8000017c:	406283b3          	sub	t2,t0,t1
+80000180:	0103fe57          	vsetvli	t3,t2,e32,m1,tu,mu
+80000184:	00231e93          	slli	t4,t1,0x2
+80000188:	01d68f33          	add	t5,a3,t4
+8000018c:	020f6007          	vle32.v	v0,(t5)
+80000190:	5e0050d7          	vfmv.v.f	v1,ft0
+80000194:	0a009157          	vfsub.vv	v2,v0,v1
+80000198:	5e00d1d7          	vfmv.v.f	v3,ft1
+8000019c:	02311257          	vfadd.vv	v4,v3,v2
+800001a0:	5e0151d7          	vfmv.v.f	v3,ft2
+800001a4:	922112d7          	vfmul.vv	v5,v2,v2
+800001a8:	925192d7          	vfmul.vv	v5,v5,v3
+800001ac:	02429257          	vfadd.vv	v4,v4,v5
+800001b0:	01d70fb3          	add	t6,a4,t4
+800001b4:	020fe227          	vse32.v	v4,(t6)
+800001b8:	0c441457          	vfredosum.vs	v8,v4,v8,v0.t
+800001bc:	9372                	add	t1,t1,t3
+800001be:	fa534fe3          	blt	t1,t0,8000017c <exp_loop>
+800001c2:	42801357          	vfmv.f.s	ft6,v8
+800001c6:	1860f3d3          	fdiv.s	ft7,ft1,ft6
+800001ca:	4301                	li	t1,0
 
-8000017e <norm_loop>:
-8000017e:	4329                	li	t1,10
-80000180:	0062de63          	bge	t0,t1,8000019c <Conv_layer>
-80000184:	00229393          	slli	t2,t0,0x2
-80000188:	00770e33          	add	t3,a4,t2
-8000018c:	000e2087          	flw	ft1,0(t3)
-80000190:	1820f0d3          	fdiv.s	ft1,ft1,ft2
-80000194:	001e2027          	fsw	ft1,0(t3)
-80000198:	0285                	addi	t0,t0,1
-8000019a:	b7d5                	j	8000017e <norm_loop>
+800001cc <norm_loop>:
+800001cc:	406283b3          	sub	t2,t0,t1
+800001d0:	0103fe57          	vsetvli	t3,t2,e32,m1,tu,mu
+800001d4:	00231e93          	slli	t4,t1,0x2
+800001d8:	01d70f33          	add	t5,a4,t4
+800001dc:	020f6007          	vle32.v	v0,(t5)
+800001e0:	5e03d0d7          	vfmv.v.f	v1,ft7
+800001e4:	92009057          	vfmul.vv	v0,v0,v1
+800001e8:	020f6027          	vse32.v	v0,(t5)
+800001ec:	9372                	add	t1,t1,t3
+800001ee:	fc534fe3          	blt	t1,t0,800001cc <norm_loop>
+800001f2:	8082                	ret
 
-8000019c <Conv_layer>:
-8000019c:	7004b517          	auipc	a0,0x7004b
-800001a0:	29450513          	addi	a0,a0,660 # f004b430 <conv_filters>
-800001a4:	7004b597          	auipc	a1,0x7004b
-800001a8:	5d458593          	addi	a1,a1,1492 # f004b778 <input_matrix>
-800001ac:	7004c617          	auipc	a2,0x7004c
-800001b0:	72260613          	addi	a2,a2,1826 # f004c8ce <conv_output>
-800001b4:	7004b717          	auipc	a4,0x7004b
-800001b8:	59c70713          	addi	a4,a4,1436 # f004b750 <filter_bias>
-800001bc:	4481                	li	s1,0
-800001be:	4921                	li	s2,8
-800001c0:	4681                	li	a3,0
-800001c2:	a009                	j	800001c4 <filter_loop>
+800001f4 <Conv_layer>:
+800001f4:	4281                	li	t0,0
 
-800001c4 <filter_loop>:
-800001c4:	0d24da63          	bge	s1,s2,80000298 <exit>
-800001c8:	06400993          	li	s3,100
-800001cc:	03348a33          	mul	s4,s1,s3
-800001d0:	01450333          	add	t1,a0,s4
-800001d4:	4381                	li	t2,0
-800001d6:	01470f33          	add	t5,a4,s4
-800001da:	000f2907          	flw	fs2,0(t5)
-800001de:	4c81                	li	s9,0
-800001e0:	4d61                	li	s10,24
-800001e2:	0485                	addi	s1,s1,1
-800001e4:	a009                	j	800001e6 <conv_loop_vertical>
+800001f6 <filter_loop>:
+800001f6:	00229d13          	slli	s10,t0,0x2
+800001fa:	9d32                	add	s10,s10,a2
+800001fc:	000d2187          	flw	ft3,0(s10)
+80000200:	4301                	li	t1,0
+80000202:	4471                	li	s0,28
+80000204:	44e1                	li	s1,24
+80000206:	4e21                	li	t3,8
+80000208:	010e7e57          	vsetvli	t3,t3,e32,m1,tu,mu
 
-800001e6 <conv_loop_vertical>:
-800001e6:	fdacdfe3          	bge	s9,s10,800001c4 <filter_loop>
-800001ea:	07000e13          	li	t3,112
-800001ee:	039e0eb3          	mul	t4,t3,s9
-800001f2:	01d583b3          	add	t2,a1,t4
-800001f6:	4b81                	li	s7,0
-800001f8:	4c61                	li	s8,24
-800001fa:	0c85                	addi	s9,s9,1
-800001fc:	a009                	j	800001fe <conv_loop_horizontal>
+8000020c <out_y_loop>:
+8000020c:	4381                	li	t2,0
 
-800001fe <conv_loop_horizontal>:
-800001fe:	ff8bd4e3          	bge	s7,s8,800001e6 <conv_loop_vertical>
-80000202:	889e                	mv	a7,t2
-80000204:	4e11                	li	t3,4
-80000206:	037e0eb3          	mul	t4,t3,s7
-8000020a:	98f6                	add	a7,a7,t4
-8000020c:	0691                	addi	a3,a3,4
-8000020e:	4281                	li	t0,0
-80000210:	d002f8d3          	fcvt.s.w	fa7,t0
-80000214:	0128f8d3          	fadd.s	fa7,fa7,fs2
-80000218:	4a81                	li	s5,0
-8000021a:	4b15                	li	s6,5
-8000021c:	0b85                	addi	s7,s7,1
-8000021e:	a009                	j	80000220 <dotprod_25by25>
+8000020e <out_x_loop>:
+8000020e:	5e01d257          	vfmv.v.f	v4,ft3
+80000212:	4d01                	li	s10,0
 
-80000220 <dotprod_25by25>:
-80000220:	076ad763          	bge	s5,s6,8000028e <store_val>
-80000224:	8dc6                	mv	s11,a7
-80000226:	07000993          	li	s3,112
-8000022a:	033a8eb3          	mul	t4,s5,s3
-8000022e:	9df6                	add	s11,s11,t4
-80000230:	49d1                	li	s3,20
-80000232:	033a8eb3          	mul	t4,s5,s3
-80000236:	01d50333          	add	t1,a0,t4
-8000023a:	00032087          	flw	ft1,0(t1)
-8000023e:	00432107          	flw	ft2,4(t1)
-80000242:	00832187          	flw	ft3,8(t1)
-80000246:	00c32207          	flw	ft4,12(t1)
-8000024a:	01032287          	flw	ft5,16(t1)
-8000024e:	000da307          	flw	ft6,0(s11)
-80000252:	004da387          	flw	ft7,4(s11)
-80000256:	008da407          	flw	fs0,8(s11)
-8000025a:	00cda487          	flw	fs1,12(s11)
-8000025e:	010da507          	flw	fa0,16(s11)
-80000262:	1060f5d3          	fmul.s	fa1,ft1,ft6
-80000266:	10717653          	fmul.s	fa2,ft2,ft7
-8000026a:	1081f6d3          	fmul.s	fa3,ft3,fs0
-8000026e:	10927753          	fmul.s	fa4,ft4,fs1
-80000272:	10a2f7d3          	fmul.s	fa5,ft5,fa0
-80000276:	00c5f853          	fadd.s	fa6,fa1,fa2
-8000027a:	00d87853          	fadd.s	fa6,fa6,fa3
-8000027e:	00e87853          	fadd.s	fa6,fa6,fa4
-80000282:	00f87853          	fadd.s	fa6,fa6,fa5
-80000286:	0108f8d3          	fadd.s	fa7,fa7,fa6
-8000028a:	0a85                	addi	s5,s5,1
-8000028c:	bf51                	j	80000220 <dotprod_25by25>
+80000214 <conv_y_loop>:
+80000214:	4d81                	li	s11,0
 
-8000028e <store_val>:
-8000028e:	00d60d33          	add	s10,a2,a3
-80000292:	011d2027          	fsw	fa7,0(s10)
-80000296:	b7a5                	j	800001fe <conv_loop_horizontal>
+80000216 <conv_x_loop>:
+80000216:	4a65                	li	s4,25
+80000218:	03428ab3          	mul	s5,t0,s4
+8000021c:	4b15                	li	s6,5
+8000021e:	036d0bb3          	mul	s7,s10,s6
+80000222:	9ade                	add	s5,s5,s7
+80000224:	9aee                	add	s5,s5,s11
+80000226:	0a8a                	slli	s5,s5,0x2
+80000228:	01558b33          	add	s6,a1,s5
+8000022c:	000b2087          	flw	ft1,0(s6)
+80000230:	01a30733          	add	a4,t1,s10
+80000234:	01b387b3          	add	a5,t2,s11
+80000238:	4971                	li	s2,28
+8000023a:	032709b3          	mul	s3,a4,s2
+8000023e:	99be                	add	s3,s3,a5
+80000240:	098a                	slli	s3,s3,0x2
+80000242:	01350bb3          	add	s7,a0,s3
+80000246:	020be287          	vle32.v	v5,(s7)
+8000024a:	5e00d357          	vfmv.v.f	v6,ft1
+8000024e:	b2629257          	vfmacc.vv	v4,v5,v6
+80000252:	0d85                	addi	s11,s11,1
+80000254:	4c15                	li	s8,5
+80000256:	fd8dc0e3          	blt	s11,s8,80000216 <conv_x_loop>
+8000025a:	0d05                	addi	s10,s10,1
+8000025c:	4c15                	li	s8,5
+8000025e:	fb8d4be3          	blt	s10,s8,80000214 <conv_y_loop>
+80000262:	24000a13          	li	s4,576
+80000266:	03428ab3          	mul	s5,t0,s4
+8000026a:	02930b33          	mul	s6,t1,s1
+8000026e:	9b1e                	add	s6,s6,t2
+80000270:	9ada                	add	s5,s5,s6
+80000272:	0a8a                	slli	s5,s5,0x2
+80000274:	01568bb3          	add	s7,a3,s5
+80000278:	020be227          	vse32.v	v4,(s7)
+8000027c:	03a1                	addi	t2,t2,8
+8000027e:	4cc1                	li	s9,16
+80000280:	f87cd7e3          	bge	s9,t2,8000020e <out_x_loop>
+80000284:	0093d563          	bge	t2,s1,8000028e <end_row>
+80000288:	5e01d257          	vfmv.v.f	v4,ft3
+8000028c:	4d01                	li	s10,0
 
-80000298 <exit>:
-80000298:	4529                	li	a0,10
-8000029a:	00000073          	ecall
+8000028e <end_row>:
+8000028e:	0305                	addi	t1,t1,1
+80000290:	f6934ee3          	blt	t1,s1,8000020c <out_y_loop>
+80000294:	0285                	addi	t0,t0,1
+80000296:	4ca1                	li	s9,8
+80000298:	f592cfe3          	blt	t0,s9,800001f6 <filter_loop>
+
+8000029c <end>:
+8000029c:	8082                	ret
 
 8000029e <relu_activation>:
-8000029e:	1141                	addi	sp,sp,-16
-800002a0:	c606                	sw	ra,12(sp)
-800002a2:	e422                	fsw	fs0,8(sp)
-800002a4:	c222                	sw	s0,4(sp)
-800002a6:	1171                	addi	sp,sp,-4
-800002a8:	c002                	sw	zero,0(sp)
-800002aa:	6002                	flw	ft0,0(sp)
-800002ac:	0111                	addi	sp,sp,4
-800002ae:	4281                	li	t0,0
-800002b0:	842a                	mv	s0,a0
-800002b2:	20000453          	fmv.s	fs0,ft0
+8000029e:	1101                	addi	sp,sp,-32
+800002a0:	ce06                	sw	ra,28(sp)
+800002a2:	cc22                	sw	s0,24(sp)
+800002a4:	ea22                	fsw	fs0,20(sp)
+800002a6:	c82a                	sw	a0,16(sp)
+800002a8:	c61a                	sw	t1,12(sp)
+800002aa:	c41e                	sw	t2,8(sp)
+800002ac:	c232                	sw	a2,4(sp)
+800002ae:	d0007453          	fcvt.s.w	fs0,zero
+800002b2:	6315                	lui	t1,0x5
+800002b4:	80030313          	addi	t1,t1,-2048 # 4800 <MatrixSize+0x47f6>
+800002b8:	842a                	mv	s0,a0
 
-800002b6 <relu_loop>:
-800002b6:	00042087          	flw	ft1,0(s0)
-800002ba:	288090d3          	fmax.s	ft1,ft1,fs0
-800002be:	00142027          	fsw	ft1,0(s0)
-800002c2:	0411                	addi	s0,s0,4
-800002c4:	0285                	addi	t0,t0,1
-800002c6:	feb2c8e3          	blt	t0,a1,800002b6 <relu_loop>
-800002ca:	4412                	lw	s0,4(sp)
-800002cc:	6422                	flw	fs0,8(sp)
-800002ce:	40b2                	lw	ra,12(sp)
-800002d0:	0141                	addi	sp,sp,16
-800002d2:	8082                	ret
+800002ba <vector_loop>:
+800002ba:	01037657          	vsetvli	a2,t1,e32,m1,tu,mu
+800002be:	02056407          	vle32.v	v8,(a0)
+800002c2:	1a845457          	vfmax.vf	v8,v8,fs0
+800002c6:	02056427          	vse32.v	v8,(a0)
+800002ca:	00261393          	slli	t2,a2,0x2
+800002ce:	951e                	add	a0,a0,t2
+800002d0:	40730333          	sub	t1,t1,t2
+800002d4:	fe0313e3          	bnez	t1,800002ba <vector_loop>
+800002d8:	4612                	lw	a2,4(sp)
+800002da:	43a2                	lw	t2,8(sp)
+800002dc:	4332                	lw	t1,12(sp)
+800002de:	4542                	lw	a0,16(sp)
+800002e0:	6452                	flw	fs0,20(sp)
+800002e2:	4462                	lw	s0,24(sp)
+800002e4:	40f2                	lw	ra,28(sp)
+800002e6:	6105                	addi	sp,sp,32
+800002e8:	8082                	ret
 
-800002d4 <maxpool_2x2>:
-800002d4:	4601                	li	a2,0
-800002d6:	44b1                	li	s1,12
-800002d8:	4901                	li	s2,0
-800002da:	4ec1                	li	t4,16
-800002dc:	4f01                	li	t5,0
+800002ea <maxpool_2x2>:
+800002ea:	1141                	addi	sp,sp,-16
+800002ec:	4789                	li	a5,2
+800002ee:	4901                	li	s2,0
+800002f0:	4f11                	li	t5,4
+800002f2:	010f7fd7          	vsetvli	t6,t5,e32,m1,tu,mu
 
-800002de <max_pool_outer_loop>:
-800002de:	04995763          	bge	s2,s1,8000032c <done>
-800002e2:	0c000a13          	li	s4,192
-800002e6:	032a0ab3          	mul	s5,s4,s2
-800002ea:	0905                	addi	s2,s2,1
-800002ec:	43b1                	li	t2,12
-800002ee:	4e01                	li	t3,0
-800002f0:	a009                	j	800002f2 <patch_loop>
+800002f6 <loop_depth_vector>:
+800002f6:	4401                	li	s0,0
 
-800002f2 <patch_loop>:
-800002f2:	fe7e56e3          	bge	t3,t2,800002de <max_pool_outer_loop>
-800002f6:	45a1                	li	a1,8
-800002f8:	02be0f33          	mul	t5,t3,a1
-800002fc:	9f56                	add	t5,t5,s5
-800002fe:	01e28fb3          	add	t6,t0,t5
-80000302:	000fa087          	flw	ft1,0(t6) # 3f000000 <MatrixSize+0x3efffff6>
-80000306:	004fa107          	flw	ft2,4(t6)
-8000030a:	060fa187          	flw	ft3,96(t6)
-8000030e:	064fa207          	flw	ft4,100(t6)
-80000312:	282090d3          	fmax.s	ft1,ft1,ft2
-80000316:	283090d3          	fmax.s	ft1,ft1,ft3
-8000031a:	284090d3          	fmax.s	ft1,ft1,ft4
-8000031e:	00c30733          	add	a4,t1,a2
-80000322:	00172027          	fsw	ft1,0(a4)
-80000326:	0611                	addi	a2,a2,4
-80000328:	0e05                	addi	t3,t3,1
-8000032a:	b7e1                	j	800002f2 <patch_loop>
+800002f8 <loop_i_vector>:
+800002f8:	4481                	li	s1,0
 
-8000032c <done>:
-8000032c:	8082                	ret
+800002fa <loop_j_vector>:
+800002fa:	00141513          	slli	a0,s0,0x1
+800002fe:	02750533          	mul	a0,a0,t2
+80000302:	00149593          	slli	a1,s1,0x1
+80000306:	952e                	add	a0,a0,a1
+80000308:	02738633          	mul	a2,t2,t2
+8000030c:	02c906b3          	mul	a3,s2,a2
+80000310:	9536                	add	a0,a0,a3
+80000312:	050a                	slli	a0,a0,0x2
+80000314:	00a285b3          	add	a1,t0,a0
+80000318:	0005a007          	flw	ft0,0(a1)
+8000031c:	e002                	fsw	ft0,0(sp)
+8000031e:	0045a087          	flw	ft1,4(a1)
+80000322:	e206                	fsw	ft1,4(sp)
+80000324:	00239713          	slli	a4,t2,0x2
+80000328:	00e58633          	add	a2,a1,a4
+8000032c:	00062107          	flw	ft2,0(a2)
+80000330:	e40a                	fsw	ft2,8(sp)
+80000332:	00462187          	flw	ft3,4(a2)
+80000336:	e60e                	fsw	ft3,12(sp)
+80000338:	02016007          	vle32.v	v0,(sp)
+8000033c:	1e0010d7          	vfredmax.vs	v1,v0,v0
+80000340:	42101057          	vfmv.f.s	ft0,v1
+80000344:	03c40533          	mul	a0,s0,t3
+80000348:	9526                	add	a0,a0,s1
+8000034a:	03ce0633          	mul	a2,t3,t3
+8000034e:	02c906b3          	mul	a3,s2,a2
+80000352:	9536                	add	a0,a0,a3
+80000354:	050a                	slli	a0,a0,0x2
+80000356:	00a305b3          	add	a1,t1,a0
+8000035a:	0005a027          	fsw	ft0,0(a1)
+8000035e:	0485                	addi	s1,s1,1
+80000360:	f9c4cde3          	blt	s1,t3,800002fa <loop_j_vector>
+80000364:	0405                	addi	s0,s0,1
+80000366:	f9c449e3          	blt	s0,t3,800002f8 <loop_i_vector>
+8000036a:	0905                	addi	s2,s2,1
+8000036c:	f9d945e3          	blt	s2,t4,800002f6 <loop_depth_vector>
+80000370:	0141                	addi	sp,sp,16
+80000372:	8082                	ret
 
-8000032e <printToLogVectorized>:
-8000032e:	1171                	addi	sp,sp,-4
-80000330:	c02a                	sw	a0,0(sp)
-80000332:	12300293          	li	t0,291
-80000336:	45600293          	li	t0,1110
-8000033a:	85ae                	mv	a1,a1
-8000033c:	02b585b3          	mul	a1,a1,a1
-80000340:	4281                	li	t0,0
+80000374 <Flatten>:
+80000374:	70044517          	auipc	a0,0x70044
+80000378:	49050513          	addi	a0,a0,1168 # f0044804 <output_max_flattened>
+8000037c:	4381                	li	t2,0
 
-80000342 <printloop>:
-80000342:	0105fe57          	vsetvli	t3,a1,e32,m1,tu,mu
-80000346:	002e1e93          	slli	t4,t3,0x2
-8000034a:	02056087          	vle32.v	v1,(a0)
-8000034e:	9576                	add	a0,a0,t4
-80000350:	92f2                	add	t0,t0,t3
-80000352:	00b2d363          	bge	t0,a1,80000358 <endPrintLoop>
-80000356:	b7f5                	j	80000342 <printloop>
+8000037e <outer_loop1>:
+8000037e:	4e01                	li	t3,0
 
-80000358 <endPrintLoop>:
-80000358:	12300293          	li	t0,291
-8000035c:	45600293          	li	t0,1110
-80000360:	4502                	lw	a0,0(sp)
-80000362:	0111                	addi	sp,sp,4
-80000364:	8082                	ret
+80000380 <inner_loop1>:
+80000380:	09000e93          	li	t4,144
+80000384:	027e8eb3          	mul	t4,t4,t2
+80000388:	9ef2                	add	t4,t4,t3
+8000038a:	0e8a                	slli	t4,t4,0x2
+8000038c:	9e9a                	add	t4,t4,t1
+8000038e:	000ea007          	flw	ft0,0(t4)
+80000392:	4f21                	li	t5,8
+80000394:	03cf0f33          	mul	t5,t5,t3
+80000398:	9f1e                	add	t5,t5,t2
+8000039a:	0f0a                	slli	t5,t5,0x2
+8000039c:	9f2a                	add	t5,t5,a0
+8000039e:	000f2027          	fsw	ft0,0(t5)
+800003a2:	0e05                	addi	t3,t3,1
+800003a4:	09000f93          	li	t6,144
+800003a8:	fdfe4ce3          	blt	t3,t6,80000380 <inner_loop1>
+800003ac:	0385                	addi	t2,t2,1
+800003ae:	4fa1                	li	t6,8
+800003b0:	fdf3c7e3          	blt	t2,t6,8000037e <outer_loop1>
+800003b4:	8082                	ret
 
-80000366 <_finish>:
-80000366:	d05801b7          	lui	gp,0xd0580
-8000036a:	0ff00293          	li	t0,255
-8000036e:	00518023          	sb	t0,0(gp) # d0580000 <_end+0x5057fa2e>
-80000372:	fe000ae3          	beqz	zero,80000366 <_finish>
-80000376:	0001                	nop
-80000378:	0001                	nop
-8000037a:	0001                	nop
-8000037c:	0001                	nop
-8000037e:	0001                	nop
-80000380:	0001                	nop
-80000382:	0001                	nop
-80000384:	0001                	nop
-80000386:	0001                	nop
-80000388:	0001                	nop
-8000038a:	0001                	nop
-8000038c:	0001                	nop
-8000038e:	0001                	nop
-80000390:	0001                	nop
-80000392:	0001                	nop
-80000394:	0001                	nop
-80000396:	0001                	nop
-80000398:	0001                	nop
-8000039a:	0001                	nop
-8000039c:	0001                	nop
-8000039e:	0001                	nop
-800003a0:	0001                	nop
-800003a2:	0001                	nop
-800003a4:	0001                	nop
-800003a6:	0001                	nop
-800003a8:	0001                	nop
-800003aa:	0001                	nop
-800003ac:	0001                	nop
-800003ae:	0001                	nop
-800003b0:	0001                	nop
-800003b2:	0001                	nop
-800003b4:	0001                	nop
-800003b6:	0001                	nop
-800003b8:	0001                	nop
-800003ba:	0001                	nop
-800003bc:	0001                	nop
-800003be:	0001                	nop
-800003c0:	0001                	nop
-800003c2:	0001                	nop
-800003c4:	0001                	nop
-800003c6:	0001                	nop
-800003c8:	0001                	nop
-800003ca:	0001                	nop
-800003cc:	0001                	nop
-800003ce:	0001                	nop
-800003d0:	0001                	nop
-800003d2:	0001                	nop
-800003d4:	0001                	nop
-800003d6:	0001                	nop
-800003d8:	0001                	nop
-800003da:	0001                	nop
-800003dc:	0001                	nop
-800003de:	0001                	nop
-800003e0:	0001                	nop
-800003e2:	0001                	nop
-800003e4:	0001                	nop
-800003e6:	0001                	nop
-800003e8:	0001                	nop
-800003ea:	0001                	nop
-800003ec:	0001                	nop
-800003ee:	0001                	nop
-800003f0:	0001                	nop
-800003f2:	0001                	nop
-800003f4:	0001                	nop
-800003f6:	0001                	nop
-800003f8:	0001                	nop
-800003fa:	0001                	nop
-800003fc:	0001                	nop
+800003b6 <printToLogVectorized>:
+800003b6:	1171                	addi	sp,sp,-4
+800003b8:	c02a                	sw	a0,0(sp)
+800003ba:	12300293          	li	t0,291
+800003be:	45600293          	li	t0,1110
+800003c2:	85ae                	mv	a1,a1
+800003c4:	02b585b3          	mul	a1,a1,a1
+800003c8:	4281                	li	t0,0
+
+800003ca <printloop>:
+800003ca:	0105fe57          	vsetvli	t3,a1,e32,m1,tu,mu
+800003ce:	002e1e93          	slli	t4,t3,0x2
+800003d2:	02056087          	vle32.v	v1,(a0)
+800003d6:	9576                	add	a0,a0,t4
+800003d8:	92f2                	add	t0,t0,t3
+800003da:	00b2d363          	bge	t0,a1,800003e0 <endPrintLoop>
+800003de:	b7f5                	j	800003ca <printloop>
+
+800003e0 <endPrintLoop>:
+800003e0:	12300293          	li	t0,291
+800003e4:	45600293          	li	t0,1110
+800003e8:	4502                	lw	a0,0(sp)
+800003ea:	0111                	addi	sp,sp,4
+800003ec:	8082                	ret
+
+800003ee <_finish>:
+800003ee:	d05801b7          	lui	gp,0xd0580
+800003f2:	0ff00293          	li	t0,255
+800003f6:	00518023          	sb	t0,0(gp) # d0580000 <_end+0x5057f9a6>
+800003fa:	fe000ae3          	beqz	zero,800003ee <_finish>
 800003fe:	0001                	nop
 80000400:	0001                	nop
 80000402:	0001                	nop
@@ -452,108 +442,176 @@ Disassembly of section .text:
 80000438:	0001                	nop
 8000043a:	0001                	nop
 8000043c:	0001                	nop
+8000043e:	0001                	nop
+80000440:	0001                	nop
+80000442:	0001                	nop
+80000444:	0001                	nop
+80000446:	0001                	nop
+80000448:	0001                	nop
+8000044a:	0001                	nop
+8000044c:	0001                	nop
+8000044e:	0001                	nop
+80000450:	0001                	nop
+80000452:	0001                	nop
+80000454:	0001                	nop
+80000456:	0001                	nop
+80000458:	0001                	nop
+8000045a:	0001                	nop
+8000045c:	0001                	nop
+8000045e:	0001                	nop
+80000460:	0001                	nop
+80000462:	0001                	nop
+80000464:	0001                	nop
+80000466:	0001                	nop
+80000468:	0001                	nop
+8000046a:	0001                	nop
+8000046c:	0001                	nop
+8000046e:	0001                	nop
+80000470:	0001                	nop
+80000472:	0001                	nop
+80000474:	0001                	nop
+80000476:	0001                	nop
+80000478:	0001                	nop
+8000047a:	0001                	nop
+8000047c:	0001                	nop
+8000047e:	0001                	nop
+80000480:	0001                	nop
+80000482:	0001                	nop
+80000484:	0001                	nop
+80000486:	0001                	nop
+80000488:	0001                	nop
+8000048a:	0001                	nop
+8000048c:	0001                	nop
+8000048e:	0001                	nop
+80000490:	0001                	nop
+80000492:	0001                	nop
+80000494:	0001                	nop
+80000496:	0001                	nop
+80000498:	0001                	nop
+8000049a:	0001                	nop
+8000049c:	0001                	nop
+8000049e:	0001                	nop
+800004a0:	0001                	nop
+800004a2:	0001                	nop
+800004a4:	0001                	nop
+800004a6:	0001                	nop
+800004a8:	0001                	nop
+800004aa:	0001                	nop
+800004ac:	0001                	nop
+800004ae:	0001                	nop
+800004b0:	0001                	nop
+800004b2:	0001                	nop
+800004b4:	0001                	nop
+800004b6:	0001                	nop
+800004b8:	0001                	nop
+800004ba:	0001                	nop
+800004bc:	0001                	nop
+800004be:	0001                	nop
+800004c0:	0001                	nop
+800004c2:	0001                	nop
+800004c4:	0001                	nop
 
-8000043e <matrix1>:
-8000043e:	c2df8000          	.word	0xc2df8000
-80000442:	c416b000          	.word	0xc416b000
-80000446:	44218000          	.word	0x44218000
-8000044a:	c3dbc000          	.word	0xc3dbc000
-8000044e:	c1ce0000          	.word	0xc1ce0000
-80000452:	43afa000          	.word	0x43afa000
-80000456:	c42ec000          	.word	0xc42ec000
-8000045a:	44382000          	.word	0x44382000
-8000045e:	c28b0000          	.word	0xc28b0000
-80000462:	c3e2e000          	.word	0xc3e2e000
-80000466:	c3438000          	.word	0xc3438000
-8000046a:	437e8000          	.word	0x437e8000
-8000046e:	c41a3000          	.word	0xc41a3000
-80000472:	44322000          	.word	0x44322000
-80000476:	43bf6000          	.word	0x43bf6000
-8000047a:	44051000          	.word	0x44051000
-8000047e:	44240000          	.word	0x44240000
-80000482:	439a8000          	.word	0x439a8000
-80000486:	c4110000          	.word	0xc4110000
-8000048a:	c2b78000          	.word	0xc2b78000
-8000048e:	44465000          	.word	0x44465000
-80000492:	c34f0000          	.word	0xc34f0000
-80000496:	c45f5000          	.word	0xc45f5000
-8000049a:	c4231000          	.word	0xc4231000
-8000049e:	42848000          	.word	0x42848000
-800004a2:	c437a000          	.word	0xc437a000
-800004a6:	c4028000          	.word	0xc4028000
-800004aa:	42898000          	.word	0x42898000
-800004ae:	445fb000          	.word	0x445fb000
-800004b2:	c2a00000          	.word	0xc2a00000
-800004b6:	41940000          	.word	0x41940000
-800004ba:	446e6000          	.word	0x446e6000
-800004be:	43906000          	.word	0x43906000
-800004c2:	c36b0000          	.word	0xc36b0000
-800004c6:	44431000          	.word	0x44431000
-800004ca:	c4104000          	.word	0xc4104000
-800004ce:	c46fe000          	.word	0xc46fe000
-800004d2:	4434d000          	.word	0x4434d000
-800004d6:	c4006000          	.word	0xc4006000
-800004da:	c4637000          	.word	0xc4637000
-800004de:	439b0000          	.word	0x439b0000
-800004e2:	439f0000          	.word	0x439f0000
-800004e6:	44737000          	.word	0x44737000
-800004ea:	3fa00000          	.word	0x3fa00000
-800004ee:	43ddc000          	.word	0x43ddc000
-800004f2:	4475a000          	.word	0x4475a000
-800004f6:	4384e000          	.word	0x4384e000
-800004fa:	c40a2000          	.word	0xc40a2000
-800004fe:	c3888000          	.word	0xc3888000
-80000502:	44391000          	.word	0x44391000
-80000506:	c45d7000          	.word	0xc45d7000
-8000050a:	c4712000          	.word	0xc4712000
-8000050e:	43f2e000          	.word	0x43f2e000
-80000512:	c306c000          	.word	0xc306c000
-80000516:	c3c78000          	.word	0xc3c78000
-8000051a:	c3bb0000          	.word	0xc3bb0000
-8000051e:	434d8000          	.word	0x434d8000
-80000522:	c27b0000          	.word	0xc27b0000
-80000526:	40700000          	.word	0x40700000
-8000052a:	43dd4000          	.word	0x43dd4000
-8000052e:	c1ba0000          	.word	0xc1ba0000
-80000532:	43360000          	.word	0x43360000
-80000536:	44534000          	.word	0x44534000
-8000053a:	c3b96000          	.word	0xc3b96000
-8000053e:	43e14000          	.word	0x43e14000
-80000542:	c4691000          	.word	0xc4691000
-80000546:	4442c000          	.word	0x4442c000
-8000054a:	c41ef000          	.word	0xc41ef000
-8000054e:	440ef000          	.word	0x440ef000
-80000552:	42cd8000          	.word	0x42cd8000
-80000556:	43098000          	.word	0x43098000
-8000055a:	440e1000          	.word	0x440e1000
-8000055e:	c2e40000          	.word	0xc2e40000
-80000562:	444b4000          	.word	0x444b4000
-80000566:	4475b000          	.word	0x4475b000
-8000056a:	442e8000          	.word	0x442e8000
-8000056e:	44094000          	.word	0x44094000
-80000572:	c3918000          	.word	0xc3918000
-80000576:	43c68000          	.word	0x43c68000
-8000057a:	c4706000          	.word	0xc4706000
-8000057e:	44576000          	.word	0x44576000
-80000582:	43c00000          	.word	0x43c00000
-80000586:	43e30000          	.word	0x43e30000
-8000058a:	445f1000          	.word	0x445f1000
-8000058e:	c3ce0000          	.word	0xc3ce0000
-80000592:	44237000          	.word	0x44237000
-80000596:	4454b000          	.word	0x4454b000
-8000059a:	4417e000          	.word	0x4417e000
-8000059e:	4445f000          	.word	0x4445f000
-800005a2:	429c8000          	.word	0x429c8000
-800005a6:	c3db4000          	.word	0xc3db4000
-800005aa:	43bd4000          	.word	0x43bd4000
-800005ae:	444de000          	.word	0x444de000
-800005b2:	446a9000          	.word	0x446a9000
-800005b6:	c41f5000          	.word	0xc41f5000
-800005ba:	43c34000          	.word	0x43c34000
-800005be:	c4565000          	.word	0xc4565000
-800005c2:	4445a000          	.word	0x4445a000
-800005c6:	44770000          	.word	0x44770000
-800005ca:	43b28000          	.word	0x43b28000
+800004c6 <matrix1>:
+800004c6:	c2df8000          	.word	0xc2df8000
+800004ca:	c416b000          	.word	0xc416b000
+800004ce:	44218000          	.word	0x44218000
+800004d2:	c3dbc000          	.word	0xc3dbc000
+800004d6:	c1ce0000          	.word	0xc1ce0000
+800004da:	43afa000          	.word	0x43afa000
+800004de:	c42ec000          	.word	0xc42ec000
+800004e2:	44382000          	.word	0x44382000
+800004e6:	c28b0000          	.word	0xc28b0000
+800004ea:	c3e2e000          	.word	0xc3e2e000
+800004ee:	c3438000          	.word	0xc3438000
+800004f2:	437e8000          	.word	0x437e8000
+800004f6:	c41a3000          	.word	0xc41a3000
+800004fa:	44322000          	.word	0x44322000
+800004fe:	43bf6000          	.word	0x43bf6000
+80000502:	44051000          	.word	0x44051000
+80000506:	44240000          	.word	0x44240000
+8000050a:	439a8000          	.word	0x439a8000
+8000050e:	c4110000          	.word	0xc4110000
+80000512:	c2b78000          	.word	0xc2b78000
+80000516:	44465000          	.word	0x44465000
+8000051a:	c34f0000          	.word	0xc34f0000
+8000051e:	c45f5000          	.word	0xc45f5000
+80000522:	c4231000          	.word	0xc4231000
+80000526:	42848000          	.word	0x42848000
+8000052a:	c437a000          	.word	0xc437a000
+8000052e:	c4028000          	.word	0xc4028000
+80000532:	42898000          	.word	0x42898000
+80000536:	445fb000          	.word	0x445fb000
+8000053a:	c2a00000          	.word	0xc2a00000
+8000053e:	41940000          	.word	0x41940000
+80000542:	446e6000          	.word	0x446e6000
+80000546:	43906000          	.word	0x43906000
+8000054a:	c36b0000          	.word	0xc36b0000
+8000054e:	44431000          	.word	0x44431000
+80000552:	c4104000          	.word	0xc4104000
+80000556:	c46fe000          	.word	0xc46fe000
+8000055a:	4434d000          	.word	0x4434d000
+8000055e:	c4006000          	.word	0xc4006000
+80000562:	c4637000          	.word	0xc4637000
+80000566:	439b0000          	.word	0x439b0000
+8000056a:	439f0000          	.word	0x439f0000
+8000056e:	44737000          	.word	0x44737000
+80000572:	3fa00000          	.word	0x3fa00000
+80000576:	43ddc000          	.word	0x43ddc000
+8000057a:	4475a000          	.word	0x4475a000
+8000057e:	4384e000          	.word	0x4384e000
+80000582:	c40a2000          	.word	0xc40a2000
+80000586:	c3888000          	.word	0xc3888000
+8000058a:	44391000          	.word	0x44391000
+8000058e:	c45d7000          	.word	0xc45d7000
+80000592:	c4712000          	.word	0xc4712000
+80000596:	43f2e000          	.word	0x43f2e000
+8000059a:	c306c000          	.word	0xc306c000
+8000059e:	c3c78000          	.word	0xc3c78000
+800005a2:	c3bb0000          	.word	0xc3bb0000
+800005a6:	434d8000          	.word	0x434d8000
+800005aa:	c27b0000          	.word	0xc27b0000
+800005ae:	40700000          	.word	0x40700000
+800005b2:	43dd4000          	.word	0x43dd4000
+800005b6:	c1ba0000          	.word	0xc1ba0000
+800005ba:	43360000          	.word	0x43360000
+800005be:	44534000          	.word	0x44534000
+800005c2:	c3b96000          	.word	0xc3b96000
+800005c6:	43e14000          	.word	0x43e14000
+800005ca:	c4691000          	.word	0xc4691000
+800005ce:	4442c000          	.word	0x4442c000
+800005d2:	c41ef000          	.word	0xc41ef000
+800005d6:	440ef000          	.word	0x440ef000
+800005da:	42cd8000          	.word	0x42cd8000
+800005de:	43098000          	.word	0x43098000
+800005e2:	440e1000          	.word	0x440e1000
+800005e6:	c2e40000          	.word	0xc2e40000
+800005ea:	444b4000          	.word	0x444b4000
+800005ee:	4475b000          	.word	0x4475b000
+800005f2:	442e8000          	.word	0x442e8000
+800005f6:	44094000          	.word	0x44094000
+800005fa:	c3918000          	.word	0xc3918000
+800005fe:	43c68000          	.word	0x43c68000
+80000602:	c4706000          	.word	0xc4706000
+80000606:	44576000          	.word	0x44576000
+8000060a:	43c00000          	.word	0x43c00000
+8000060e:	43e30000          	.word	0x43e30000
+80000612:	445f1000          	.word	0x445f1000
+80000616:	c3ce0000          	.word	0xc3ce0000
+8000061a:	44237000          	.word	0x44237000
+8000061e:	4454b000          	.word	0x4454b000
+80000622:	4417e000          	.word	0x4417e000
+80000626:	4445f000          	.word	0x4445f000
+8000062a:	429c8000          	.word	0x429c8000
+8000062e:	c3db4000          	.word	0xc3db4000
+80000632:	43bd4000          	.word	0x43bd4000
+80000636:	444de000          	.word	0x444de000
+8000063a:	446a9000          	.word	0x446a9000
+8000063e:	c41f5000          	.word	0xc41f5000
+80000642:	43c34000          	.word	0x43c34000
+80000646:	c4565000          	.word	0xc4565000
+8000064a:	4445a000          	.word	0x4445a000
+8000064e:	44770000          	.word	0x44770000
+80000652:	43b28000          	.word	0x43b28000
 
-800005ce <size1>:
-800005ce:	0000000a          	.word	0x0000000a
+80000656 <size1>:
+80000656:	0000000a          	.word	0x0000000a
