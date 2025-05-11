@@ -202,22 +202,115 @@ end_outer:
 
 # SOFTMAX LAYER
 
+# softmax_layer:
+#     la a4, p
+#     li t0, 0              # i = 0
+#     flw f0, 0(a3)         # f0 = max = y[0]
+
+# max_loop:
+#     li t1, 10
+#     bge t0, t1, compute_exp_sum
+
+#     slli t2, t0, 2        # t2 = i * 4
+#     add t3, a3, t2
+#     flw f1, 0(t3)         # f1 = y[i]
+#     fmax.s f0, f0, f1     # f0 = max(f0, f1)
+
+#     addi t0, t0, 1
+#     j max_loop
+
+
+# Gpt given softmax below
+.section .text
+  .globl softmax_layer
 softmax_layer:
-    la a4, p
-    li t0, 0              # i = 0
-    flw f0, 0(a3)         # f0 = max = y[0]
+    # --- Prologue: save caller-saves and temps ---
+    addi  sp, sp, -40
+    sw    ra,   36(sp)
+    sw    s0,   32(sp)
+    sw    s1,   28(sp)
+    sw    s2,   24(sp)
+    fsw   ft0,  20(sp)
+    fsw   ft1,  16(sp)
+    fsw   ft2,  12(sp)
 
-max_loop:
-    li t1, 10
-    bge t0, t1, compute_exp_sum
+    # --- Registers ---
+    # a3 = logits_base
+    # a4 = probs_base
+    li    s2, 10          # vector length
+    
+    # --- Step 1: find max(logits) ---
+    flw   ft0, 0(a3)      # ft0 = max = logits[0]
+    li    s0, 1
+1:  blt   s0, s2, 1b_endcheck
+1b:
+    slli  t0, s0, 2
+    add   t1, a3, t0
+    flw   ft1, 0(t1)      # ft1 = logits[s0]
+    fmax.s ft0, ft0, ft1  # ft0 = max(ft0, ft1)
+    addi  s0, s0, 1
+    j     1b
+1b_endcheck:
 
-    slli t2, t0, 2        # t2 = i * 4
-    add t3, a3, t2
-    flw f1, 0(t3)         # f1 = y[i]
-    fmax.s f0, f0, f1     # f0 = max(f0, f1)
+    # --- Step 2: compute exp_approx[i]=1+(x–max)+0.5*(x–max)^2, sum in ft2 ---
+    fmv.s.x   ft2, zero   # ft2 = sum = 0.0
+    li    s0, 0
+2:  blt   s0, s2, 2b_endcheck
+2b:
+    slli  t0, s0, 2
+    add   t1, a3, t0
+    flw   ft1, 0(t1)      # ft1 = x
 
-    addi t0, t0, 1
-    j max_loop
+    # x_minus_max = ft1 − ft0
+    fsub.s ft1, ft1, ft0  
+
+    # exp ≈ 1 + x + 0.5 x^2
+    li    t2, 0x3f800000  # 1.0f
+    fmv.s.x ft2, t2       # reuse ft2 just as tmp to load 1.0
+    fadd.s ft1, ft1, ft2  # ft1 = 1.0 + (x–max)
+
+    fmul.s ft2, ft1, ft1  # ft2 = (x–max)^2
+    li    t2, 0x3f000000  # 0.5f
+    fmv.s.x ft3, t2
+    fmul.s ft2, ft2, ft3  # ft2 = 0.5*(x–max)^2
+
+    fadd.s ft1, ft1, ft2  # ft1 = 1 + (x–max) + 0.5(x–max)^2
+
+    # store exp_approx[i] to probs_base
+    add   t1, a4, t0
+    fsw   ft1, 0(t1)
+
+    # sum += exp_approx
+    fadd.s ft2, ft2, ft1  # careful: reuse ft2; you may want another tmp if needed
+
+    addi  s0, s0, 1
+    j     2b
+2b_endcheck:
+
+    # --- Step 3: normalize each exp[i] by sum (in ft2) ---
+    li    s0, 0
+3:  blt   s0, s2, 3b_endcheck
+3b:
+    slli  t0, s0, 2
+    add   t1, a4, t0
+    flw   ft1, 0(t1)      # ft1 = exp_approx[i]
+    fdiv.s ft1, ft1, ft2  # ft1 = prob[i] = exp_approx[i]/sum
+    fsw   ft1, 0(t1)
+
+    addi  s0, s0, 1
+    j     3b
+3b_endcheck:
+
+    # --- Epilogue: restore all ---
+    flw   ft2, 12(sp)
+    flw   ft1, 16(sp)
+    flw   ft0, 20(sp)
+    lw    s2,   24(sp)
+    lw    s1,   28(sp)
+    lw    s0,   32(sp)
+    lw    ra,   36(sp)
+    addi  sp,   sp, 40
+    ret
 
 # =======================================
 # Step 2: Compute exp(y[i] - max) and sum
