@@ -1,5 +1,21 @@
 #define STDOUT 0xd0580000
 
+    .section .data
+    .align 4
+input_matrix:
+    # copy‐paste the 784 .float values from “Number 7 sample data.txt” here, e.g.
+    .float 0.000000,0.000000,0.000000, …  # up to 784 entries
+output_max:
+    .space 1152*4      # reserve space for your 12×12×8 maxpooled floats
+output_max_flattened:
+    .space 8*144*4     # reserve space for your flattened 1152 floats
+conv_output:
+    .space 8*24*24*4   # reserve space for your 8 feature‐maps of 24×24
+dense_outputs:
+    .space 10*4        # reserve 10 floats for the dense layer output
+p:
+    .space 10*4        # reserve 10 floats for softmax probabilities
+
 .section .text
 .global _start
 ## START YOUR CODE HERE
