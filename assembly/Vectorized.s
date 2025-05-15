@@ -193,102 +193,23 @@ end_outer:
     lw ra, 32(sp)
     addi sp, sp, 36
 
-    la a0, dense_outputs
-    li a1, 4
-    call printToLogVectorized
-    j _finish
-
-    j softmax_layer
+    # la a0, dense_outputs
+    # li a1, 4
+    # call printToLogVectorized
+    # j _finish
 
 # SOFTMAX LAYER
 
-    .globl softmax_layer
-softmax_layer:
-    # a0 → input[], a1 → output[], a2 → N
-    mv    a3, a0             # a3 = in_ptr
-    mv    a4, a1             # a4 = out_ptr
-    mv    t0, a2             # t0 = length N
+la a0, dense_outputs
+la a1, p
+li a2, 10
 
-    # ————————————————————————————————————————
-    # Load constants 1.0 → f1, 0.5 → f2
-    # ————————————————————————————————————————
-    li    t1, 0x3f800000     # bit-pattern for 1.0
-    fmv.w.x f1, t1
-    li    t1, 0x3f000000     # bit-pattern for 0.5
-    fmv.w.x f2, t1
+call softmax_layer
 
-    # ————————————————————————————————————————
-    # 1) Find max(input) → f0
-    # ————————————————————————————————————————
-    flw   f0, 0(a3)          # f0 = in[0]
-    li    t1, 1
-find_max:
-    blt   t1, t0, fm_cont
-    j     fm_done
-fm_cont:
-    slli  t2, t1, 2          # offset = i*4
-    add   t3, a3, t2
-    flw   f3, 0(t3)          # f3 = in[i]
-    fmax.s f0, f0, f3
-    addi  t1, t1, 1
-    j     find_max
-fm_done:
-
-    # ————————————————————————————————————————
-    # 2) exp-approx(x–max) & sum into f6
-    #    exp(x) ≈ 1 + x + 0.5·x²
-    # ————————————————————————————————————————
-    fsub.s   f6, f1, f1            # f6 = 0.0
-    vfmv.v.f v8, f6                # v8[*] = 0.0 accumulator :contentReference[oaicite:3]{index=3}
-    li      t1, 0
-exp_loop:
-    sub     t2, t0, t1
-    vsetvli t3, t2, e32,m1   # t3 = vl
-    slli    t4, t1, 2
-    add     t5, a3, t4
-    vle32.v v0, (t5)         # v0 = in[t1..]
-
-    vfmv.v.f v1, f0          # v1 = broadcast(max)
-    vfsub.vv  v2, v0, v1     # v2 = in – max
-    vfmv.v.f v3, f1          # v3 = 1.0
-    vfadd.vv  v4, v3, v2     # v4 = 1 + (x–max)
-    vfmv.v.f v3, f2          # v3 = 0.5
-    vfmul.vv  v5, v2, v2     # v5 = (x–max)²
-    vfmul.vv  v5, v5, v3     # v5 = 0.5·(x–max)²
-    vfadd.vv  v4, v4, v5     # v4 = 1 + (x–max) + 0.5(x–max)²
-
-    # store approx into out[], accumulate
-    add     t6, a4, t4
-    vse32.v     v4, (t6)              # store approximation
-    vfredosum.vs v8, v4, v8, v0.t     # accumulate sum in v8[0] :contentReference[oaicite:4]{index=4} (apparently fredo works but not fred?)
-
-    add     t1, t1, t3
-    blt     t1, t0, exp_loop
-
-    # extract total sum from v8 into f6
-    vfmv.f.s  f6, v8                   # f6 = v8[0]
-
-    # ————————————————————————————————————————
-    # 3) Normalize: out[i] *= 1/Σ
-    # ————————————————————————————————————————
-    fdiv.s  f7, f1, f6       # f7 = 1.0 / sum
-    li      t1, 0
-norm_loop:
-    sub     t2, t0, t1
-    vsetvli t3, t2, e32,m1
-    slli    t4, t1, 2
-    add     t5, a4, t4
-    vle32.v  v0, (t5)        # v0 = out[t1..]
-
-    vfmv.v.f v1, f7          # broadcast reciprocal
-    vfmul.vv  v0, v0, v1     # v0 = out * (1/sum)
-    vse32.v  v0, (t5)           # proper store :contentReference[oaicite:5]{index=5}
-
-    add    t1, t1, t3
-    blt    t1, t0, norm_loop
-
-    ret
-
+la a0, p
+li a1, 4
+call printToLogVectorized
+j _finish
 
 
 #********************************************************************** Subroutines ************************************************************************************
@@ -824,6 +745,92 @@ Flatten:
         blt t2, t6, outer_loop1  # Continue outer loop if t2 < 8
 
         ret
+
+softmax_layer:
+    # a0 → input[], a1 → output[], a2 → N
+    mv    a3, a0             # a3 = in_ptr
+    mv    a4, a1             # a4 = out_ptr
+    mv    t0, a2             # t0 = length N
+
+    # ————————————————————————————————————————
+    # Load constants 1.0 → f1, 0.5 → f2
+    # ————————————————————————————————————————
+    li    t1, 0x3f800000     # bit-pattern for 1.0
+    fmv.w.x f1, t1
+    li    t1, 0x3f000000     # bit-pattern for 0.5
+    fmv.w.x f2, t1
+
+    # ————————————————————————————————————————
+    # 1) Find max(input) → f0
+    # ————————————————————————————————————————
+    flw   f0, 0(a3)          # f0 = in[0]
+    li    t1, 1
+find_max:
+    blt   t1, t0, fm_cont
+    j     fm_done
+fm_cont:
+    slli  t2, t1, 2          # offset = i*4
+    add   t3, a3, t2
+    flw   f3, 0(t3)          # f3 = in[i]
+    fmax.s f0, f0, f3
+    addi  t1, t1, 1
+    j     find_max
+fm_done:
+
+    # ————————————————————————————————————————
+    # 2) exp-approx(x–max) & sum into f6
+    #    exp(x) ≈ 1 + x + 0.5·x²
+    # ————————————————————————————————————————
+    fsub.s   f6, f1, f1            # f6 = 0.0
+    vfmv.v.f v8, f6                # v8[*] = 0.0 accumulator :contentReference[oaicite:3]{index=3}
+    li      t1, 0
+exp_loop:
+    sub     t2, t0, t1
+    vsetvli t3, t2, e32,m1   # t3 = vl
+    slli    t4, t1, 2
+    add     t5, a3, t4
+    vle32.v v0, (t5)         # v0 = in[t1..]
+
+    vfmv.v.f v1, f0          # v1 = broadcast(max)
+    vfsub.vv  v2, v0, v1     # v2 = in – max
+    vfmv.v.f v3, f1          # v3 = 1.0
+    vfadd.vv  v4, v3, v2     # v4 = 1 + (x–max)
+    vfmv.v.f v3, f2          # v3 = 0.5
+    vfmul.vv  v5, v2, v2     # v5 = (x–max)²
+    vfmul.vv  v5, v5, v3     # v5 = 0.5·(x–max)²
+    vfadd.vv  v4, v4, v5     # v4 = 1 + (x–max) + 0.5(x–max)²
+
+    # store approx into out[], accumulate
+    add     t6, a4, t4
+    vse32.v     v4, (t6)              # store approximation
+    vfredosum.vs v8, v4, v8, v0.t     # accumulate sum in v8[0] :contentReference[oaicite:4]{index=4} (apparently fredo works but not fred?)
+
+    add     t1, t1, t3
+    blt     t1, t0, exp_loop
+
+    # extract total sum from v8 into f6
+    vfmv.f.s  f6, v8                   # f6 = v8[0]
+
+    # ————————————————————————————————————————
+    # 3) Normalize: out[i] *= 1/Σ
+    # ————————————————————————————————————————
+    fdiv.s  f7, f1, f6       # f7 = 1.0 / sum
+    li      t1, 0
+norm_loop:
+    sub     t2, t0, t1
+    vsetvli t3, t2, e32,m1
+    slli    t4, t1, 2
+    add     t5, a4, t4
+    vle32.v  v0, (t5)        # v0 = out[t1..]
+
+    vfmv.v.f v1, f7          # broadcast reciprocal
+    vfmul.vv  v0, v0, v1     # v0 = out * (1/sum)
+    vse32.v  v0, (t5)           # proper store :contentReference[oaicite:5]{index=5}
+
+    add    t1, t1, t3
+    blt    t1, t0, norm_loop
+
+    ret
 
 
 ## END YOU CODE HERE
