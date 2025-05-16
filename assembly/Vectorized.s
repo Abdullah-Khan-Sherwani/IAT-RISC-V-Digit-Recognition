@@ -102,101 +102,18 @@ call Flatten
 # j _finish
 # ###############################TEST############################
 
-dense_layer:
+la a0, output_max_flattened
+la a1, dense_weights
+la a2, dense_bias
+la a3, dense_outputs
+call dense_layer
 
-    # Prologue
-    addi sp, sp, -20
-    sw s0, 0(sp)
-    sw s1, 4(sp)
-    sw s2, 8(sp)
-    sw s3, 12(sp)
-    sw ra, 16(sp)
-    
-    # Load base addresses
-    la a0, dense_weights         # s2 = &W[0][0]
-    la a1, output_max_flattened            # s3 = &A[0]
-    la a2, dense_bias        # s4 = &b[0]
-    la a3, dense_outputs         # s5 = &Z[0]
-
-    # Initialize loop counters
-    li s0, 0                   # s0 = i (output neuron index)
-    li s3, 10                  # s3 = number of output neurons (10)
-
-outer_loop:
-    bge s0, s3, end_outer      # if i >= 10, exit outer loop
-    
-    # Initialize dot product accumulator
-    mv t0, zero                # t0 = dot_product = 0.0
-    fcvt.s.w ft0, t0           # ft0 = 0.0 (float)
-    
-    # Inner loop setup
-    li s1, 0                   # s1 = j (input feature index)
-    li s2, 1152                # s2 = number of input features (1152)
-    
-    # Calculate address of current row in W
-    li t1, 1152                # t1 = 1152 (elements per row)
-    mul t1, s0, t1             # t1 = i * 1152
-    slli t1, t1, 2             # t1 = byte offset for row i
-    add t1, a0, t1             # t1 = &W[i][0]
-    
-inner_loop:
-    bge s1, s2, end_inner      # if j >= 1152, exit inner loop
-    
-    # Load W[i][j]
-    lw t2, 0(t1)               # t2 = W[i][j] (as integer)
-    fmv.w.x ft1, t2            # ft1 = W[i][j] (float)
-    
-    # Load A_flat[j]
-    slli t3, s1, 2             # t3 = j * 4 (byte offset)
-    add t3, a1, t3             # t3 = &A_flat[j]
-    lw t4, 0(t3)               # t4 = A_flat[j] (as integer)
-    fmv.w.x ft2, t4            # ft2 = A_flat[j] (float)
-    
-    # Multiply and accumulate
-    fmadd.s ft0, ft1, ft2, ft0 # ft0 += W[i][j] * A_flat[j]
-    
-    # Increment pointers and counters
-    addi t1, t1, 4             # move to next element in W row
-    addi s1, s1, 1             # j++
-    j inner_loop
-    
-end_inner:
-    # Add bias term b[i]
-    slli t5, s0, 2             # t5 = i * 4 (byte offset)
-    add t5, a2, t5             # t5 = &b[i]
-    lw t6, 0(t5)               # t6 = b[i] (as integer)
-    fmv.w.x ft3, t6            # ft3 = b[i] (float)
-    
-    fadd.s ft0, ft0, ft3       # ft0 += b[i]
-    
-    # Store result in Z[i]
-    slli t5, s0, 2             # t5 = i * 4 (byte offset)
-    add t5, a3, t5             # t5 = &Z[i]
-    fmv.x.w t6, ft0            # t6 = Z[i] (as integer)
-    sw t6, 0(t5)               # store Z[i]
-    
-    # Next output neuron
-    addi s0, s0, 1             # i++
-    j outer_loop
-
-end_outer:
-
-    # Epilogue
-    lw s7, 0(sp)
-    lw s6, 4(sp)
-    lw s5, 8(sp)
-    lw s4, 12(sp)
-    lw s3, 16(sp)
-    lw s2, 20(sp)
-    lw s1, 24(sp)
-    lw s0, 28(sp)
-    lw ra, 32(sp)
-    addi sp, sp, 36
-
-    # la a0, dense_outputs
-    # li a1, 4
-    # call printToLogVectorized
-    # j _finish
+###############################TEST############################
+la a0, dense_outputs
+li a1, 4
+call printToLogVectorized
+j _finish
+###############################TEST############################
 
 # SOFTMAX LAYER
 
@@ -746,6 +663,198 @@ Flatten:
 
         ret
 
+# #dense_layer:
+
+#     # Prologue
+#     addi sp, sp, -20
+#     sw s0, 0(sp)
+#     sw s1, 4(sp)
+#     sw s2, 8(sp)
+#     sw s3, 12(sp)
+#     sw ra, 16(sp)
+    
+#     # Load base addresses
+#     la a0, dense_weights         # s2 = &W[0][0]
+#     la a1, output_max_flattened            # s3 = &A[0]
+#     la a2, dense_bias        # s4 = &b[0]
+#     la a3, dense_outputs         # s5 = &Z[0]
+
+#     # Initialize loop counters
+#     li s0, 0                   # s0 = i (output neuron index)
+#     li s3, 10                  # s3 = number of output neurons (10)
+
+# outer_loop:
+#     bge s0, s3, end_outer      # if i >= 10, exit outer loop
+    
+#     # Initialize dot product accumulator
+#     mv t0, zero                # t0 = dot_product = 0.0
+#     fcvt.s.w ft0, t0           # ft0 = 0.0 (float)
+    
+#     # Inner loop setup
+#     li s1, 0                   # s1 = j (input feature index)
+#     li s2, 1152                # s2 = number of input features (1152)
+    
+#     # Calculate address of current row in W
+#     li t1, 1152                # t1 = 1152 (elements per row)
+#     mul t1, s0, t1             # t1 = i * 1152
+#     slli t1, t1, 2             # t1 = byte offset for row i
+#     add t1, a0, t1             # t1 = &W[i][0]
+    
+# inner_loop:
+#     bge s1, s2, end_inner      # if j >= 1152, exit inner loop
+    
+#     # Load W[i][j]
+#     lw t2, 0(t1)               # t2 = W[i][j] (as integer)
+#     fmv.w.x ft1, t2            # ft1 = W[i][j] (float)
+    
+#     # Load A_flat[j]
+#     slli t3, s1, 2             # t3 = j * 4 (byte offset)
+#     add t3, a1, t3             # t3 = &A_flat[j]
+#     lw t4, 0(t3)               # t4 = A_flat[j] (as integer)
+#     fmv.w.x ft2, t4            # ft2 = A_flat[j] (float)
+    
+#     # Multiply and accumulate
+#     fmadd.s ft0, ft1, ft2, ft0 # ft0 += W[i][j] * A_flat[j]
+    
+#     # Increment pointers and counters
+#     addi t1, t1, 4             # move to next element in W row
+#     addi s1, s1, 1             # j++
+#     j inner_loop
+    
+# end_inner:
+#     # Add bias term b[i]
+#     slli t5, s0, 2             # t5 = i * 4 (byte offset)
+#     add t5, a2, t5             # t5 = &b[i]
+#     lw t6, 0(t5)               # t6 = b[i] (as integer)
+#     fmv.w.x ft3, t6            # ft3 = b[i] (float)
+    
+#     fadd.s ft0, ft0, ft3       # ft0 += b[i]
+    
+#     # Store result in Z[i]
+#     slli t5, s0, 2             # t5 = i * 4 (byte offset)
+#     add t5, a3, t5             # t5 = &Z[i]
+#     fmv.x.w t6, ft0            # t6 = Z[i] (as integer)
+#     sw t6, 0(t5)               # store Z[i]
+    
+#     # Next output neuron
+#     addi s0, s0, 1             # i++
+#     j outer_loop
+
+# end_outer:
+
+#     # Epilogue
+#     lw s7, 0(sp)
+#     lw s6, 4(sp)
+#     lw s5, 8(sp)
+#     lw s4, 12(sp)
+#     lw s3, 16(sp)
+#     lw s2, 20(sp)
+#     lw s1, 24(sp)
+#     lw s0, 28(sp)
+#     lw ra, 32(sp)
+#     addi sp, sp, 36
+
+dense_layer:
+    # Prologue
+    addi sp, sp, -32
+    sw s0, 0(sp)
+    sw s1, 4(sp)
+    sw s2, 8(sp)
+    sw s3, 12(sp)
+    sw ra, 16(sp)
+    
+    # Load base addresses
+    la a0, dense_weights         # a0 = &W[0][0]
+    la a1, output_max_flattened  # a1 = &A[0]
+    la a2, dense_bias            # a2 = &b[0]
+    la a3, dense_outputs         # a3 = &Z[0]
+    
+    # Initialize loop counters
+    li s0, 0                     # s0 = i (output neuron index)
+    li s3, 10                    # s3 = number of output neurons (10)
+    
+outer_loop:
+    bge s0, s3, end_outer        # if i >= 10, exit outer loop
+    
+    # Initialize dot product accumulator
+    fcvt.s.w ft0, zero           # ft0 = 0.0 (float)
+    
+    # Inner loop setup
+    li s1, 0                     # s1 = j (input feature index)
+    li s2, 1152                  # s2 = number of input features (1152)
+    
+    # Calculate address of current row in W
+    li t1, 1152                  # t1 = 1152 (elements per row)
+    mul t1, s0, t1               # t1 = i * 1152
+    slli t1, t1, 2               # t1 = byte offset for row i
+    add t1, a0, t1               # t1 = &W[i][0]
+    
+    # Vector setup - process 8 elements at a time
+    li t0, 8                     # We'll process 8 elements per iteration
+    vsetvli zero, t0, e32, m1, ta, ma  # Set vector length to 8, using 32-bit elements
+    
+    # Initialize vector accumulator to zeros
+    vmv.v.i v0, 0                # v0 = [0,0,0,0,0,0,0,0]
+
+dvector_loop:
+    # Check if we processed all elements
+    bge s1, s2, end_inner        # if j >= 1152, exit inner loop
+    
+    # Load 8 elements from W[i][j:j+7]
+    vle32.v v1, (t1)             # v1 = weights[i][j:j+7]
+    
+    # Load 8 elements from A_flat[j:j+7]
+    slli t3, s1, 2               # t3 = j * 4 (byte offset)
+    add t3, a1, t3               # t3 = &A_flat[j]
+    vle32.v v2, (t3)             # v2 = input[j:j+7]
+    
+    # Multiply and accumulate vectors
+    vfmacc.vv v0, v1, v2         # v0 += v1 * v2 (element-wise multiply-accumulate)
+    
+    # Update counter and pointers
+    addi s1, s1, 8               # j += 8
+    addi t1, t1, 32              # Move weight pointer forward by 8*4 bytes
+    
+    j dvector_loop
+    
+end_inner:
+    # Reduce vector to scalar sum for final result
+    # Initialize reduction register with 0
+    vfmv.s.f v3, ft0             # v3[0] = 0.0
+    
+    # Sum reduction: v0 -> scalar in v3[0]
+    vfredsum.vs v3, v0, v3       # v3[0] = sum(v0) + v3[0]
+    
+    # Move result to scalar register
+    vfmv.f.s ft0, v3             # ft0 = v3[0]
+    
+    # Add bias term b[i]
+    slli t5, s0, 2               # t5 = i * 4 (byte offset)
+    add t5, a2, t5               # t5 = &b[i]
+    flw ft3, 0(t5)               # ft3 = b[i]
+    
+    fadd.s ft0, ft0, ft3         # ft0 += b[i]
+    
+    # Store result in Z[i]
+    slli t5, s0, 2               # t5 = i * 4 (byte offset)
+    add t5, a3, t5               # t5 = &Z[i]
+    fsw ft0, 0(t5)               # store Z[i]
+    
+    # Next output neuron
+    addi s0, s0, 1               # i++
+    j outer_loop
+    
+end_outer:
+    # Epilogue - corrected to match prologue
+    lw s0, 0(sp)
+    lw s1, 4(sp)
+    lw s2, 8(sp)
+    lw s3, 12(sp)
+    lw ra, 16(sp)
+    addi sp, sp, 32
+    
+    ret
+
 softmax_layer:
     # a0 → input[], a1 → output[], a2 → N
     mv    a3, a0             # a3 = in_ptr
@@ -825,6 +934,15 @@ norm_loop:
 
     vfmv.v.f v1, f7          # broadcast reciprocal
     vfmul.vv  v0, v0, v1     # v0 = out * (1/sum)
+
+
+    # vfmv.f.s  f6, v0    ###!!! 
+    # la a0, test
+    # fsw f6,  0(a0)
+    # li a1, 1
+    # call prin
+
+
     vse32.v  v0, (t5)           # proper store :contentReference[oaicite:5]{index=5}
 
     add    t1, t1, t3
@@ -914,6 +1032,8 @@ output_max:
 .section .data 
 .align 2
 test: .float 6.9
+
+soft_test: .float -5.825374, -9.887916, -2.302836, 1.209780, -7.803916, -3.275545, -19.105032, 10.612792, -6.254661, -0.177880
 
 conv_output: 
     .space 18432 # 8*24*24*4 # 8 channels, height and width 24x24 and word size 4 bytes
