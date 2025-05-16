@@ -109,11 +109,11 @@ la a3, dense_outputs
 call dense_layer
 
 ###############################TEST############################
-la a0, dense_outputs
-li a1, 4
-call printToLogVectorized
-j _finish
-###############################TEST############################
+#la a0, dense_outputs
+#li a1, 4
+#call printToLogVectorized
+#j _finish
+################################TEST############################
 
 # SOFTMAX LAYER
 
@@ -859,15 +859,7 @@ softmax_layer:
     # a0 → input[], a1 → output[], a2 → N
     mv    a3, a0             # a3 = in_ptr
     mv    a4, a1             # a4 = out_ptr
-    mv    t0, a2             # t0 = length N
-
-    # ————————————————————————————————————————
-    # Load constants 1.0 → f1, 0.5 → f2
-    # ————————————————————————————————————————
-    li    t1, 0x3f800000     # bit-pattern for 1.0
-    fmv.w.x f1, t1
-    li    t1, 0x3f000000     # bit-pattern for 0.5
-    fmv.w.x f2, t1
+    mv    t0, a2             # t0 = length N (should be 10)
 
     # ————————————————————————————————————————
     # 1) Find max(input) → f0
@@ -875,9 +867,7 @@ softmax_layer:
     flw   f0, 0(a3)          # f0 = in[0]
     li    t1, 1
 find_max:
-    blt   t1, t0, fm_cont
-    j     fm_done
-fm_cont:
+    bge   t1, t0, fm_done    # Changed from blt to bge (proper exit condition)
     slli  t2, t1, 2          # offset = i*4
     add   t3, a3, t2
     flw   f3, 0(t3)          # f3 = in[i]
@@ -887,69 +877,136 @@ fm_cont:
 fm_done:
 
     # ————————————————————————————————————————
-    # 2) exp-approx(x–max) & sum into f6
-    #    exp(x) ≈ 1 + x + 0.5·x²
+    # 2) Calculate exp(x-max) via better approximation
     # ————————————————————————————————————————
-    fsub.s   f6, f1, f1            # f6 = 0.0
-    vfmv.v.f v8, f6                # v8[*] = 0.0 accumulator :contentReference[oaicite:3]{index=3}
-    li      t1, 0
+    # Initialize sum register to 0
+    fcvt.s.w f6, zero        # f6 = 0.0 (sum accumulator)
+    
+    # Prepare for vectorized operations
+    li t1, 0                 # Initialize counter
+    
 exp_loop:
-    sub     t2, t0, t1
-    vsetvli t3, t2, e32,m1   # t3 = vl
-    slli    t4, t1, 2
-    add     t5, a3, t4
-    vle32.v v0, (t5)         # v0 = in[t1..]
-
+    # Determine how many elements to process in this iteration
+    sub t2, t0, t1
+    vsetvli t3, t2, e32, m1  # Set vector length (t3 = vl)
+    
+    # Load input values
+    slli t4, t1, 2           # t4 = i*4 (byte offset)
+    add t5, a3, t4           # t5 = address of input[i]
+    vle32.v v0, (t5)         # v0 = input[i:i+vl]
+    
+    # Subtract max value for numerical stability
     vfmv.v.f v1, f0          # v1 = broadcast(max)
-    vfsub.vv  v2, v0, v1     # v2 = in – max
-    vfmv.v.f v3, f1          # v3 = 1.0
-    vfadd.vv  v4, v3, v2     # v4 = 1 + (x–max)
-    vfmv.v.f v3, f2          # v3 = 0.5
-    vfmul.vv  v5, v2, v2     # v5 = (x–max)²
-    vfmul.vv  v5, v5, v3     # v5 = 0.5·(x–max)²
-    vfadd.vv  v4, v4, v5     # v4 = 1 + (x–max) + 0.5(x–max)²
-
-    # store approx into out[], accumulate
-    add     t6, a4, t4
-    vse32.v     v4, (t6)              # store approximation
-    vfredosum.vs v8, v4, v8, v0.t     # accumulate sum in v8[0] :contentReference[oaicite:4]{index=4} (apparently fredo works but not fred?)
-
-    add     t1, t1, t3
-    blt     t1, t0, exp_loop
-
-    # extract total sum from v8 into f6
-    vfmv.f.s  f6, v8                   # f6 = v8[0]
-
+    vfsub.vv v2, v0, v1      # v2 = input - max
+    
+    # Better exp approximation for larger range
+    # We'll use a more accurate polynomial approximation
+    # exp(x) ≈ 1 + x + x²/2 + x³/6 + x⁴/24 for small x
+    
+    # First, compute powers of x
+    vfmv.v.f v3, f6          # v3 = 0 (initialize result)
+    
+    # Get 1.0 constant
+    li t6, 0x3f800000        # IEEE 754 representation of 1.0
+    fmv.w.x f1, t6
+    vfmv.v.f v4, f1          # v4 = 1.0
+    
+    # Add constant term: result += 1.0
+    vfadd.vv v3, v3, v4      # v3 = 0 + 1.0 = 1.0
+    
+    # Add linear term: result += x
+    vfadd.vv v3, v3, v2      # v3 = 1.0 + x
+    
+    # Compute x²
+    vfmul.vv v5, v2, v2      # v5 = x²
+    
+    # Get 0.5 constant
+    li t6, 0x3f000000        # IEEE 754 representation of 0.5
+    fmv.w.x f2, t6
+    vfmv.v.f v4, f2          # v4 = 0.5
+    
+    # Compute x²/2 and add: result += x²/2
+    vfmul.vv v6, v5, v4      # v6 = x² * 0.5 = x²/2
+    vfadd.vv v3, v3, v6      # v3 = 1.0 + x + x²/2
+    
+    # Compute x³
+    vfmul.vv v6, v5, v2      # v6 = x² * x = x³
+    
+    # Get 1/6 constant
+    li t6, 0x3e2aaaab        # IEEE 754 representation of 1/6 (≈0.16666667)
+    fmv.w.x f2, t6
+    vfmv.v.f v4, f2          # v4 = 1/6
+    
+    # Compute x³/6 and add: result += x³/6
+    vfmul.vv v7, v6, v4      # v7 = x³ * (1/6) = x³/6
+    vfadd.vv v3, v3, v7      # v3 = 1.0 + x + x²/2 + x³/6
+    
+    # Compute x⁴
+    vfmul.vv v7, v6, v2      # v7 = x³ * x = x⁴
+    
+    # Get 1/24 constant
+    li t6, 0x3d800000        # IEEE 754 representation of 1/24 (≈0.04166667)
+    fmv.w.x f2, t6
+    vfmv.v.f v4, f2          # v4 = 1/24
+    
+    # Compute x⁴/24 and add: result += x⁴/24
+    vfmul.vv v8, v7, v4      # v8 = x⁴ * (1/24) = x⁴/24
+    vfadd.vv v3, v3, v8      # v3 = 1.0 + x + x²/2 + x³/6 + x⁴/24
+    
+    # Apply threshold to prevent overflow
+    li t6, 0x42b00000        # IEEE 754 representation of 88.0 (max safe value)
+    fmv.w.x f2, t6
+    vfmv.v.f v4, f2          # v4 = 88.0
+    
+    # Create mask for values in v2 > 88.0
+    vmflt.vf v0, v2, f2       # v0 = mask where input-max < 88.0
+    
+    # For values where input-max > 88.0, use exp(88.0) instead
+    li t6, 0x7ef882b7        # IEEE 754 representation of exp(88.0)
+    fmv.w.x f2, t6
+    vfmv.v.f v8, f2          # v8 = exp(88.0)
+    
+    # Select between computed exp and max threshold
+    vmerge.vvm v9, v8, v3, v0  # v9 = v0 ? v3 : v8
+    
+    # Store results back
+    add t6, a4, t4           # t6 = address of output[i]
+    vse32.v v9, (t6)         # Store results
+    
+    # Accumulate sum
+    vfredosum.vs v10, v9, v9  # v10[0] = sum(v9)
+    vfmv.f.s f7, v10          # f7 = sum of this segment
+    fadd.s f6, f6, f7         # f6 += segment sum
+    
+    # Update counter and continue loop
+    add t1, t1, t3           # i += vl
+    blt t1, t0, exp_loop     # Continue if not done
+    
     # ————————————————————————————————————————
     # 3) Normalize: out[i] *= 1/Σ
     # ————————————————————————————————————————
-    fdiv.s  f7, f1, f6       # f7 = 1.0 / sum
-    li      t1, 0
+    li t6, 0x3f800000        # IEEE 754 representation of 1.0
+    fmv.w.x f1, t6
+    fdiv.s f7, f1, f6        # f7 = 1.0 / sum
+    
+    li t1, 0                 # Reset counter
 norm_loop:
-    sub     t2, t0, t1
-    vsetvli t3, t2, e32,m1
-    slli    t4, t1, 2
-    add     t5, a4, t4
-    vle32.v  v0, (t5)        # v0 = out[t1..]
-
-    vfmv.v.f v1, f7          # broadcast reciprocal
-    vfmul.vv  v0, v0, v1     # v0 = out * (1/sum)
-
-
-    # vfmv.f.s  f6, v0    ###!!! 
-    # la a0, test
-    # fsw f6,  0(a0)
-    # li a1, 1
-    # call prin
-
-
-    vse32.v  v0, (t5)           # proper store :contentReference[oaicite:5]{index=5}
-
-    add    t1, t1, t3
-    blt    t1, t0, norm_loop
-
+    sub t2, t0, t1
+    vsetvli t3, t2, e32, m1  # Set vector length
+    
+    slli t4, t1, 2           # t4 = i*4 (byte offset)
+    add t5, a4, t4           # t5 = address of output[i]
+    vle32.v v0, (t5)         # v0 = output[i:i+vl]
+    
+    vfmv.v.f v1, f7          # v1 = broadcast(1/sum)
+    vfmul.vv v0, v0, v1      # v0 = output * (1/sum)
+    
+    vse32.v v0, (t5)         # Store normalized values
+    
+    add t1, t1, t3           # i += vl
+    blt t1, t0, norm_loop    # Continue if not done
+    
     ret
-
 
 ## END YOU CODE HERE
 
