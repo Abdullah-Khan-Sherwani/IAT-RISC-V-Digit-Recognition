@@ -936,7 +936,7 @@ softmax_layer:
     flw fs3, 36(a1)
     nop
     
-    j _end4
+    ret
 
 # Calculates approximate e^x using Taylor series expansion
 # Input: fa0 = x (power)
@@ -991,148 +991,260 @@ taylor_loop:
 #        a1 = pointer to output array
 #        a2 = number of elements
 # Output: None (results stored in output array)
+#softmax:
+#    # Save registers
+#    addi sp, sp, -64
+#    sw ra, 0(sp)
+#    sw s0, 4(sp)
+#    sw s1, 8(sp)
+#    sw s2, 12(sp)
+#    fsw fs0, 16(sp)
+#    fsw fs1, 20(sp)
+#    fsw fs2, 24(sp)
+#    fsw fs3, 28(sp)
+#    fsw fs4, 32(sp)
+#    fsw fs5, 36(sp)
+#    sw t0, 40(sp)
+#    sw t1, 44(sp)
+#    sw t2, 48(sp)
+#    
+#    # Initialize
+#    mv s0, a0               # s0 = input array
+#    mv s1, a1               # s1 = output array
+#    mv s2, a2               # s2 = number of elements
+#    
+#    # Find maximum value for numerical stability
+#    li t0, 0                # t0 = current index
+#    flw fs0, 0(s0)          # fs0 = max value (initialize with first element)
+#    addi t0, t0, 1
+#    
+#max_loop:
+#    bge t0, s2, max_done
+#    
+#    slli t1, t0, 2          # t1 = t0 * 4
+#    add t1, s0, t1
+#    flw ft0, 0(t1)
+#    
+#    flt.s t2, fs0, ft0
+#    beqz t2, max_continue
+#    fmv.s fs0, ft0
+#    
+#max_continue:
+#    addi t0, t0, 1
+#    j max_loop
+#    
+#max_done:
+#    # Initialize sum to zero
+#    li t3, 0
+#    fcvt.s.w fs1, t3        # fs1 = 0.0 (sum of exponentials)
+#    
+#    # Load threshold value
+#    la t4, neg_threshold
+#    flw fs5, 0(t4)          # fs5 = -10.0 threshold
+#    
+#    # First pass: calculate exponentials and sum
+#    li t0, 0                # t0 = current index
+#    
+#exp_sum_loop:
+#    bge t0, s2, exp_done
+#    
+#    slli t1, t0, 2          # t1 = t0 * 4
+#    add t1, s0, t1
+#    flw ft0, 0(t1)          # ft0 = input[t0]
+#    
+#    # Subtract max for numerical stability
+#    fsub.s fa0, ft0, fs0    # fa0 = input[t0] - max
+#    
+#    # Check if (input[t0] - max) < -10
+#    flt.s t2, fa0, fs5      # t2 = 1 if (input[t0]-max) < -10
+#    beqz t2, calculate_exp  # If not less than -10, calculate exp
+#    
+#    # If less than -10, set result to 0 and skip calculation
+#    fcvt.s.w fa0, t3        # fa0 = 0.0
+#    j store_exp_result
+#    
+#calculate_exp:
+#    # Save important registers before function call
+#    sw t0, 52(sp)
+#    sw t1, 56(sp)
+#    fsw fs1, 60(sp)
+#    
+#    # Calculate e^(input[t0] - max)
+#    jal ra, exp_approx
+#    
+#    # Restore important registers after function call
+#    lw t0, 52(sp)
+#    lw t1, 56(sp)
+#    flw fs1, 60(sp)
+#    
+#store_exp_result:
+#    # Store exp result in output array temporarily
+#    slli t1, t0, 2
+#    add t1, s1, t1
+#    fsw fa0, 0(t1)
+#    
+#    # Add to sum
+#    fadd.s fs1, fs1, fa0    # fs1 = sum + exp_result
+#    
+#    addi t0, t0, 1
+#    j exp_sum_loop
+#    
+#exp_done:
+#    # Second pass: normalize by sum
+#    li t0, 0
+#    
+#normalize_loop:
+#    bge t0, s2, normalize_done
+#    
+#    slli t1, t0, 2
+#    add t1, s1, t1
+#    flw ft0, 0(t1)
+#    
+#    # Divide by sum
+#    fdiv.s ft0, ft0, fs1
+#    
+#    # Store final probability
+#    fsw ft0, 0(t1)
+#    
+#    addi t0, t0, 1
+#    j normalize_loop
+#    
+#normalize_done:
+#    # Restore registers
+#    lw ra, 0(sp)
+#    lw s0, 4(sp)
+#    lw s1, 8(sp)
+#    lw s2, 12(sp)
+#    flw fs0, 16(sp)
+#    flw fs1, 20(sp)
+#    flw fs2, 24(sp)
+#    flw fs3, 28(sp)
+#    flw fs4, 32(sp)
+#    flw fs5, 36(sp)
+#    lw t0, 40(sp)
+#    lw t1, 44(sp)
+#    lw t2, 48(sp)
+#    addi sp, sp, 64
+#    
+#    ret
+#    
+#_end4:
+#    la a0, p
+#    li a1, 4
+#    call printToLogVectorized
+#    ecall
+#    ret
+
+##########################################
+# Vectorized Softmax Layer
+# a0 = pointer to dense_outputs (input)
+# a1 = pointer to p             (output)
+# a2 = number of elements (10)
+##########################################
+
 softmax:
-    # Save registers
-    addi sp, sp, -64
-    sw ra, 0(sp)
-    sw s0, 4(sp)
-    sw s1, 8(sp)
-    sw s2, 12(sp)
-    fsw fs0, 16(sp)
-    fsw fs1, 20(sp)
-    fsw fs2, 24(sp)
-    fsw fs3, 28(sp)
-    fsw fs4, 32(sp)
-    fsw fs5, 36(sp)
-    sw t0, 40(sp)
-    sw t1, 44(sp)
-    sw t2, 48(sp)
-    
-    # Initialize
-    mv s0, a0               # s0 = input array
-    mv s1, a1               # s1 = output array
-    mv s2, a2               # s2 = number of elements
-    
-    # Find maximum value for numerical stability
-    li t0, 0                # t0 = current index
-    flw fs0, 0(s0)          # fs0 = max value (initialize with first element)
-    addi t0, t0, 1
-    
+    # Prologue – save all needed registers
+    addi sp, sp, -32
+    sw   ra, 28(sp)
+    sw   s0, 24(sp)
+    sw   s1, 20(sp)
+    sw   s2, 16(sp)
+    sw   s3, 12(sp)
+
+    # Load arguments into saved regs
+    mv   s0, a0       # s0 = input pointer
+    mv   s1, a1       # s1 = output pointer
+    mv   s2, a2       # s2 = element count
+
+    # ========= 1. Find max (vectorized) =========
+    mv   s3, s2       # s3 = remaining elements
+    mv   t0, s0       # t0 = ptr into input
+    flw  fs0, 0(t0)   # fs0 = initial max = first element
+
 max_loop:
-    bge t0, s2, max_done
-    
-    slli t1, t0, 2          # t1 = t0 * 4
-    add t1, s0, t1
-    flw ft0, 0(t1)
-    
+    beqz s3, max_done
+    vsetvli t1, s3, e32, m1    # t1 = how many lanes this iteration
+    vle32.v v0, (t0)           # load up to t1 floats
+    vfmv.v.f   v2, fs0            # ← broadcast current max (fs0) into all lanes of v2
+    vfredmax.vs v1, v0, v2
+    vfmv.f.s ft0, v1           # ft0 = chunk max
     flt.s t2, fs0, ft0
-    beqz t2, max_continue
-    fmv.s fs0, ft0
-    
-max_continue:
-    addi t0, t0, 1
-    j max_loop
-    
+    beqz t2, .Lskip_max_update
+      fmv.s fs0, ft0           # update global max
+.Lskip_max_update:
+    slli t3, t1, 2             # bytes = t1 * 4
+    add  t0, t0, t3            # advance input ptr
+    sub  s3, s3, t1            # decrement remaining
+    j    max_loop
 max_done:
-    # Initialize sum to zero
-    li t3, 0
-    fcvt.s.w fs1, t3        # fs1 = 0.0 (sum of exponentials)
-    
-    # Load threshold value
-    la t4, neg_threshold
-    flw fs5, 0(t4)          # fs5 = -10.0 threshold
-    
-    # First pass: calculate exponentials and sum
-    li t0, 0                # t0 = current index
-    
+    mv    t0, s0         # reset input pointer back to dense_outputs base
+    mv    s3, s2         # reset remaining-elements count
+    fcvt.s.w fs1, zero   # fs1 = 0.0  ← running sum of exp’s
+
+    # Load clip‐threshold = –10.0 into fs5
+    la    t4, neg_threshold
+    flw   fs5, 0(t4)
+
+    # ========= 2. Exponent & sum (scalar per element) =========
+    mv   s3, s2       # remaining
+    mv   t0, s0       # input ptr
+    mv   t1, s1       # output ptr
+    li   t2, 0
+    fcvt.s.w fs1, t2  # fs1 = 0.0 (sum accumulator)
+
 exp_sum_loop:
-    bge t0, s2, exp_done
-    
-    slli t1, t0, 2          # t1 = t0 * 4
-    add t1, s0, t1
-    flw ft0, 0(t1)          # ft0 = input[t0]
-    
-    # Subtract max for numerical stability
-    fsub.s fa0, ft0, fs0    # fa0 = input[t0] - max
-    
-    # Check if (input[t0] - max) < -10
-    flt.s t2, fa0, fs5      # t2 = 1 if (input[t0]-max) < -10
-    beqz t2, calculate_exp  # If not less than -10, calculate exp
-    
-    # If less than -10, set result to 0 and skip calculation
-    fcvt.s.w fa0, t3        # fa0 = 0.0
-    j store_exp_result
-    
-calculate_exp:
-    # Save important registers before function call
-    sw t0, 52(sp)
-    sw t1, 56(sp)
-    fsw fs1, 60(sp)
-    
-    # Calculate e^(input[t0] - max)
-    jal ra, exp_approx
-    
-    # Restore important registers after function call
-    lw t0, 52(sp)
-    lw t1, 56(sp)
-    flw fs1, 60(sp)
-    
-store_exp_result:
-    # Store exp result in output array temporarily
-    slli t1, t0, 2
-    add t1, s1, t1
-    fsw fa0, 0(t1)
-    
-    # Add to sum
-    fadd.s fs1, fs1, fa0    # fs1 = sum + exp_result
-    
-    addi t0, t0, 1
-    j exp_sum_loop
-    
+    beqz s3, exp_done
+    flw  ft0, 0(t0)             # ft0 = x
+    fsub.s fa0, ft0, fs0       # fa0 = x - max
+    flt.s   t2, fa0, fs5        # if (x-max < -10.0)
+    bnez    t2, .Lstore_zero    #   skip the exp and zero out
+
+    jal     ra, exp_approx      # fa0 = exp(x-max)
+    j   .Lstore                # then go store it
+
+ .Lstore_zero:                  # “skip” path
+    fcvt.s.w fa0, zero         # fa0 = 0.0
+
+ .Lstore:                       # shared store
+    fsw     fa0, 0(t1)         # store either exp or 0
+    fadd.s  fs1, fs1, fa0      # sum += fa0
+    addi t0, t0, 4
+    addi t1, t1, 4
+    addi s3, s3, -1
+    j    exp_sum_loop
 exp_done:
-    # Second pass: normalize by sum
-    li t0, 0
-    
-normalize_loop:
-    bge t0, s2, normalize_done
-    
-    slli t1, t0, 2
-    add t1, s1, t1
-    flw ft0, 0(t1)
-    
-    # Divide by sum
-    fdiv.s ft0, ft0, fs1
-    
-    # Store final probability
-    fsw ft0, 0(t1)
-    
-    addi t0, t0, 1
-    j normalize_loop
-    
-normalize_done:
-    # Restore registers
-    lw ra, 0(sp)
-    lw s0, 4(sp)
-    lw s1, 8(sp)
-    lw s2, 12(sp)
-    flw fs0, 16(sp)
-    flw fs1, 20(sp)
-    flw fs2, 24(sp)
-    flw fs3, 28(sp)
-    flw fs4, 32(sp)
-    flw fs5, 36(sp)
-    lw t0, 40(sp)
-    lw t1, 44(sp)
-    lw t2, 48(sp)
-    addi sp, sp, 64
-    
-    ret
-    
-_end4:
-    la a0, p
-    li a1, 4
+
+    # ========= 3. Normalize (vectorized) =========
+    mv   s3, s2       # remaining
+    mv   t1, s1       # ptr into exp buffer
+
+    li    t0, 1             # integer 1
+    fcvt.s.w   fs2, t0      # fs2 = 1.0
+    fdiv.s     fs2, fs2, fs1  # fs2 = 1.0 / total_sum (fs1)
+
+norm_loop:
+    beqz s3, norm_done
+    vsetvli t4, s3, e32, m1    # t4 = lanes this iter
+    vle32.v v2, (t1)           # load exp chunk
+    vfmul.vf v2, v2, fs2      # v2[i] *= (1.0/sum)
+    vse32.v v2, (t1)           # store back
+    slli t5, t4, 2             # bytes = t4 * 4
+    add  t1, t1, t5
+    sub  s3, s3, t4
+    j    norm_loop
+norm_done:
+    la   a0, p               # pointer to result buffer
+    li   a1, 4              # number of elements (in s2)
     call printToLogVectorized
     ecall
+
+    # Epilogue – restore registers
+    lw   ra, 28(sp)
+    lw   s0, 24(sp)
+    lw   s1, 20(sp)
+    lw   s2, 16(sp)
+    lw   s3, 12(sp)
+    addi sp, sp, 32
     ret
 
 ## END YOU CODE HERE
