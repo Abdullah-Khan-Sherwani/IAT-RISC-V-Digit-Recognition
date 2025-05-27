@@ -3,14 +3,16 @@ ABI = -march=rv32gcv_zbb_zbs -mabi=ilp32f
 LINK = ./veer/link.ld
 CODEFOLDER = ./assembly
 TEMPPATH = ./veer/tempFiles
+INCLUDE_PATH = -I./assembly
 
 allV: compileV executeV
 
 cleanV: 
 	rm -f $(TEMPPATH)/logV.txt  $(TEMPPATH)/programV.hex  $(TEMPPATH)/TESTV.dis  $(TEMPPATH)/TESTV.exe
 	
+# Modified compileV target to include the .inc file
 compileV:
-	$(GCC_PREFIX)-gcc $(ABI) -lgcc -T$(LINK) -o  $(TEMPPATH)/TESTV.exe $(CODEFOLDER)/Vectorized.s -nostartfiles -lm
+	$(GCC_PREFIX)-gcc $(ABI) -lgcc -T$(LINK) -o  $(TEMPPATH)/TESTV.exe $(CODEFOLDER)/Vectorized.s -nostartfiles -lm $(INCLUDE_PATH)
 	$(GCC_PREFIX)-objcopy -O verilog  $(TEMPPATH)/TESTV.exe  $(TEMPPATH)/programV.hex
 	$(GCC_PREFIX)-objdump -S  $(TEMPPATH)/TESTV.exe >  $(TEMPPATH)/TESTV.dis
 	
