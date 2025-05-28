@@ -5,10 +5,13 @@ CODEFOLDER = ./assembly
 TEMPPATH = ./veer/tempFiles
 INCLUDE_PATH = -I./assembly
 
-allV: compileV executeV
+allV: prepareV compileV executeV
 
 cleanV: 
 	rm -f $(TEMPPATH)/logV.txt  $(TEMPPATH)/programV.hex  $(TEMPPATH)/TESTV.dis  $(TEMPPATH)/TESTV.exe
+
+prepareV:
+	python3 python/test.py -1 V
 	
 # Modified compileV target to include the .inc file
 compileV:
