@@ -438,12 +438,13 @@ relu_activation:
     fcvt.s.w fs0, zero      # fs0 = 0.0 (more reliable than stack method)
 
     # Setup vector processing
-    li t1, 18432            # t1 = total bytes (4608 floats * 4)
+    #li t1, 18432            # t1 = total bytes (4608 floats * 4)
+    li t1, 4608
     mv s0, a0               # Save original pointer in preserved register
 
 vector_loop:
     # Set vector length (elements processed per iteration)
-    vsetvli a2, t1, e32     # a2 = elements this iteration (max possible)
+    vsetvli a2, t1, e32    # a2 = elements this iteration (max possible)
                             # t1 = remaining bytes
 
     # Load vector of floats from memory
@@ -456,7 +457,8 @@ vector_loop:
     # Update pointer & counter
     slli t2, a2, 2          # t2 = bytes processed (a2 * 4)
     add a0, a0, t2          # Move pointer forward
-    sub t1, t1, t2          # Decrement remaining bytes
+    #sub t1, t1, t2          # Decrement remaining bytes
+    sub t1, t1, a2
     bnez t1, vector_loop    # Loop if bytes remain
 
     # EPILOGUE
